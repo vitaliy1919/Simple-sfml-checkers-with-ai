@@ -7,6 +7,7 @@ using std::vector;
 using std::ostream;
 using std::pair;
 using std::endl;
+using std::cout;
 
 class CheckersPiece;
 struct BoardIndex;
@@ -26,7 +27,7 @@ struct BoardIndex
 	BoardIndex bottomRight() const {return BoardIndex(column + 1, row - 1);}
 	inline bool isInBoard() const { return (column >= 'a' && column <= 'h') && (row >= 1 && row <= 8);}
 	pieces_iterator checkForPieces(vector_pieces& pieces) const;
-	bool checkForPiecesBool(vector_pieces& pieces) const { return checkForPieces(pieces) != pieces.end(); }
+	bool checkForPiecesBool(vector_pieces& pieces) const { return checkForPieces(pieces) != pieces.end();  }
 	//void checkForBeatingAndAddToPossibleMoves(const vector_pieces& pieces, vector<move_with_piece> possible_moves) const;
 };
 inline bool isInBoard(const BoardIndex& to_check) { return to_check.isInBoard(); }

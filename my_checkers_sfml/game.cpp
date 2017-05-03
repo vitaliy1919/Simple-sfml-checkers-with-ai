@@ -155,6 +155,8 @@ void Game::checkPiecesForBeating()
 	pieces_that_can_beat_.clear();
 	for (auto x : *cur_player_)
 	{
+		if (x.getPosition() == BoardIndex('b', 4))
+			cout << x.getPosition() << endl;
 		if (!(x.possibleBeatMoves(*cur_player_, *another_player_).empty()))
 		{
 			pieces_that_can_beat_.push_back(x);
@@ -174,9 +176,11 @@ BoardIndex Game::clickPositionInBoard(int x, int y)
 void Game::Run()
 {
 	playersInit();
+	checkPiecesForBeating();
 	while (window.isOpen())
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
+		
 		sf::Event event;
 		while (window.pollEvent(event))
 		{

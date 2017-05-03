@@ -32,6 +32,11 @@ int main()
 	//}
 	Game checkers;
 	checkers.Run();
-
+	/*checkers.playersInit();
+	vector_pieces check_array = checkers.getPlayer();
+	BoardIndex pos = { 'a',4 };
+	pieces_iterator iter = pos.checkForPieces(check_array);
+	std::cout << (iter != check_array.end()) << endl;
+	cout << pos.checkForPiecesBool(check_array) << endl;*/
 	return 0;
 }

@@ -60,5 +60,6 @@ public:
 		must_beat_(false){}
 	
 	void Run();
-	
+	vector_pieces getWhitePlayer() const { return white_player_; }
+	vector_pieces getBlackPlayer() const { return black_player_; }
 };
