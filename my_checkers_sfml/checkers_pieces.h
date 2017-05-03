@@ -55,4 +55,13 @@ public:
 	bool isKing() const { return is_king_; }
 	void makeKing() { is_king_ = true; }
 	void makePiece() { is_king_ = false; }
+	friend bool operator==(const CheckersPiece& a, const CheckersPiece& b)
+	{
+		return a.position_ == b.position_ && a.color_ == b.color_ && a.is_king_ == b.is_king_;
+	}
+	friend bool operator!=(const CheckersPiece& a, const CheckersPiece& b)
+	{
+		return !(a == b);
+	}
+
 };

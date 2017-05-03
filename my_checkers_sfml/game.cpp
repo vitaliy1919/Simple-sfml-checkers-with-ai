@@ -40,20 +40,131 @@ void Game::playersInit()
 		}
 	}
 }
-void Game::movePiece(CheckersPiece& clicked_piece)
+void Game::changeTurn()
 {
-	possible_beat_moves = clicked_piece.possibleBeatMoves(white_player_,black_player_);
-	if (!possible_beat_moves.empty())
+	white_turn_ = !white_turn_;
+	std::swap(cur_player_, another_player_);
+	checkPiecesForBeating();
+}
+void Game::clearInfoForClickedPiece()
+{
+	hightlighted_cells_.clear();
+	possible_beat_moves_.clear();
+	possible_moves_.clear();
+}
+void Game::processMouseClick(const BoardIndex click_position)
+{
+	if (piece_clicked_)
+		movePiece(click_position);
+	else
 	{
-		for (auto x : possible_beat_moves)
+		pieces_iterator piece_on_position = click_position.checkForPieces(*cur_player_);
+		if (piece_on_position != cur_player_->end())
+		{
+
+			if (must_beat_)
+			{
+				pieces_iterator piece_which_beat = std::find(
+					pieces_that_can_beat_.begin(),
+					pieces_that_can_beat_.end(),
+					*piece_on_position);
+				if (piece_which_beat != pieces_that_can_beat_.end())
+				{
+					piece_clicked_ = true;
+					possible_beat_moves_ = piece_on_position->possibleBeatMoves(*cur_player_, *another_player_);
+					piece_firstly_clicked_ = &(*piece_on_position);
+					hightlighted_cells_.clear();
+					hightlighted_cells_.push_back(piece_on_position->getPosition());
+					for (auto x : possible_beat_moves_)
+						hightlighted_cells_.push_back(x.first);
+				}
+			}
+			else
+			{
+				piece_clicked_ = true;
+				piece_firstly_clicked_ = &(*piece_on_position);
+				possible_moves_ = piece_on_position->possibleMoves(*cur_player_, *another_player_);
+				hightlighted_cells_.push_back(piece_on_position->getPosition());
+				hightlighted_cells_.insert(hightlighted_cells_.end(), possible_moves_.begin(), possible_moves_.end());
+			}
+		}
+	}
+}
+void Game::buildPossibleMoves(CheckersPiece& clicked_piece)
+{
+	piece_firstly_clicked_ = &clicked_piece;
+	possible_beat_moves_ = clicked_piece.possibleBeatMoves(*cur_player_, *another_player_);
+	if (!possible_beat_moves_.empty())
+	{
+		for (auto x : possible_beat_moves_)
 			hightlighted_cells_.push_back(x.first);
 	}
 	else
 	{
-		vector<BoardIndex> possible_moves = clicked_piece.possibleMoves(white_player_, black_player_);
-		for (auto x : possible_moves)
+		possible_moves_ = clicked_piece.possibleMoves(*cur_player_, *another_player_);
+		for (auto x : possible_moves_)
 			hightlighted_cells_.push_back(x);
 	}
+}
+void Game::movePiece(const BoardIndex & click_position)
+{
+	bool move_done = false;
+	pieces_iterator clicked_piece_player_iter = click_position.checkForPieces(*cur_player_);
+	if (clicked_piece_player_iter != cur_player_->end() && *clicked_piece_player_iter == *piece_firstly_clicked_)
+	{
+		clearInfoForClickedPiece();
+		piece_clicked_ = false;
+	}
+	if (!possible_beat_moves_.empty())
+	{
+		int i = 0;
+		while (i < possible_beat_moves_.size() && possible_beat_moves_[i].first != click_position)
+			++i;
+		if (i < possible_beat_moves_.size())
+		{
+			piece_firstly_clicked_->setPosition(click_position);
+			another_player_->erase(possible_beat_moves_[i].second);
+			possible_beat_moves_ = piece_firstly_clicked_->possibleBeatMoves(*cur_player_, *another_player_);
+			if (!possible_beat_moves_.empty())
+			{
+				hightlighted_cells_.clear();
+				for (auto x : possible_beat_moves_)
+					hightlighted_cells_.push_back(x.first);
+			}
+			else
+				move_done = true;
+		}
+	}
+	else
+	{
+		if (std::find(possible_moves_.begin(), possible_moves_.end(), click_position) != possible_moves_.end())
+		{
+			piece_firstly_clicked_->setPosition(click_position);
+			move_done = true;
+		}
+	}
+	if (move_done)
+	{
+		clearInfoForClickedPiece();
+		changeTurn();
+		piece_clicked_ = false;
+	}
+}
+void Game::checkPiecesForBeating()
+{
+	pieces_that_can_beat_.clear();
+	for (auto x : *cur_player_)
+	{
+		if (!(x.possibleBeatMoves(*cur_player_, *another_player_).empty()))
+		{
+			pieces_that_can_beat_.push_back(x);
+			hightlighted_cells_.push_back(x.getPosition());
+		}
+	}
+	if (!pieces_that_can_beat_.empty())
+		must_beat_ = true;
+	else
+		must_beat_ = false;
 }
 BoardIndex Game::clickPositionInBoard(int x, int y)
 {
@@ -66,7 +177,6 @@ void Game::Run()
 	while (window.isOpen())
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
-		vector_pieces& cur_player = (white_turn_ ? white_player_ : black_player_);
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -77,12 +187,19 @@ void Game::Run()
 			{
 				BoardIndex click_position = clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
 				std::cout << click_position << endl;
-				pieces_iterator iter = click_position.checkForPieces(cur_player);
-				if (iter != cur_player.end())
+				processMouseClick(click_position);
+				/*if (!piece_clicked_)
 				{
-					hightlighted_cells_.push_back(click_position);
-					movePiece(*iter);
+					pieces_iterator iter = click_position.checkForPieces(*cur_player_);
+					if (iter != cur_player_->end())
+					{
+						piece_clicked_ = true;
+						hightlighted_cells_.push_back(click_position);
+						buildPossibleMoves(*iter);
+					}
 				}
+				else
+					movePiece(click_position);*/
 
 			}
 		}

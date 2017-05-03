@@ -13,9 +13,11 @@ void addPossibleMoveBeat(BoardIndex position,
 	{
 		pieces_iterator piece_position = position_to_check.checkForPieces(opponent_pieces);
 		position_to_check = (position_to_check.*pf)();
-		if (piece_position != opponent_pieces.end() && position_to_check.isInBoard() && 
-			position_to_check.checkForPiecesBool(opponent_pieces) &&
-			position.checkForPiecesBool(player_pieces))
+		if (piece_position != opponent_pieces.end() && position_to_check.isInBoard() &&
+			//	!position_to_check.checkForPiecesBool(opponent_pieces) &&
+			//	!position.checkForPiecesBool(player_pieces))             //!!!!! Check why this  doesn't work 
+			position_to_check.checkForPieces(opponent_pieces) == opponent_pieces.end() &&
+			position_to_check.checkForPieces(player_pieces) == player_pieces.end())
 		{
 			possible_moves.push_back({ position_to_check,piece_position });
 		}
@@ -37,7 +39,8 @@ void addPossibleMove(BoardIndex position, BoardIndex(BoardIndex::*pf)() const,
 	BoardIndex position_to_check = (position.*pf)();
 	if (position_to_check.isInBoard())
 	{
-		if (!position_to_check.checkForPiecesBool(opponent_pieces) && !position_to_check.checkForPiecesBool(player_pieces))
+		if (position_to_check.checkForPieces(opponent_pieces)==opponent_pieces.end() &&
+			position_to_check.checkForPieces(player_pieces)==player_pieces.end())
 			possible_moves.push_back(position_to_check);
 	}
 }
