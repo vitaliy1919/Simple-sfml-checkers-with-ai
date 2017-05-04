@@ -16,6 +16,10 @@ class Game
 {
 private:
 	static const int kTextMargin = 30;
+	static const int kTopMargin = kTextMargin;
+	static const int kLeftMargin = kTextMargin;
+	static const int kRightMargin = kTextMargin;
+	static const int kBottomMargin = kTextMargin;
 	vector_pieces white_player_;
 	vector_pieces black_player_;
 	
@@ -40,10 +44,12 @@ private:
 	BoardIndex clickPositionInBoard(int x, int y);
 
 	enum {NOT_ENDED,WHITE_WINS,BLACK_WINS};
-	int game_state;
+	int game_state_;
+
 	void drawPlayersPieces(const vector_pieces player, const sf::Texture& piece_texture, const sf::Texture& piece_king_texture);
 	void drawBoard();
 	void drawPieces();
+	void drawWinState();
 
 	void playersInit();
 
@@ -57,7 +63,7 @@ private:
 	void movePiece(const BoardIndex& click_position);
 	void checkForWin();
 	bool checkPlayerHasMove(const vector_pieces& player);
-	
+	void clearAllStates();
 public:
 	Game() :
 		white_player_(12), 
@@ -73,12 +79,12 @@ public:
 		another_player_(&black_player_),
 		pieces_that_can_beat_(),
 		must_beat_(false),
-		game_state(NOT_ENDED)
+		game_state_(NOT_ENDED)
 	{
 		sf::VideoMode video_mode;
 		video_mode = video_mode.getDesktopMode();
 		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);
-		window.create(sf::VideoMode(window_size + 2 * kTextMargin, window_size + 3 * kTextMargin), "Checkers");
+		window.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers",sf::Style::Close);
 		window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 	}
 	

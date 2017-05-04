@@ -124,9 +124,27 @@ ostream & operator<<(ostream & os, const BoardIndex & to_show)
 	return os;
 }
 
+istream & operator >> (istream & is, BoardIndex & to_input)
+{
+	is >> to_input.column >> to_input.row;
+	return is;
+}
+
 pieces_iterator checkForPieces(const BoardIndex& position,vector_pieces& pieces)
 {
 	return position.checkForPieces(pieces);
+}
+
+ostream & operator<<(ostream & os, const CheckersPiece & piece_to_show)
+{
+	os << piece_to_show.position_ << ' ' << piece_to_show.color_ << ' ' << piece_to_show.is_king_;
+	return os;
+}
+
+istream & operator >> (istream & is, CheckersPiece & piece_to_input)
+{
+	is >> piece_to_input.position_ >> piece_to_input.color_ >> piece_to_input.is_king_;
+	return is;
 }
 
 pieces_iterator BoardIndex::checkForPieces(vector_pieces & pieces) const

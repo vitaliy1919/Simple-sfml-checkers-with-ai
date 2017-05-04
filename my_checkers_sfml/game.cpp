@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <algorithm>
+#include <sstream>
 void Game::drawPlayersPieces(const vector_pieces player, const sf::Texture& piece_texture,const sf::Texture& piece_king_texture)
 {
 	sf::Sprite piece;
@@ -11,15 +12,15 @@ void Game::drawPlayersPieces(const vector_pieces player, const sf::Texture& piec
 		else
 			piece.setTexture(piece_texture);
 		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
-		piece_position.x += cell_size_ / 2 - piece.getGlobalBounds().height / 2 + kTextMargin;
-		piece_position.y += cell_size_ / 2 - piece.getGlobalBounds().width / 2 + 2* kTextMargin;
+		piece_position.x += cell_size_ / 2 - piece.getGlobalBounds().height / 2;
+		piece_position.y += cell_size_ / 2 - piece.getGlobalBounds().width / 2;
 		piece.setPosition(piece_position);
 		window.draw(piece);
 	}
 }
 sf::Vector2f Game::getRealPosition(const BoardIndex & position) const
 {
-	return sf::Vector2f((position.column - 'a')*cell_size_,(8 - position.row)*cell_size_);
+	return sf::Vector2f((position.column - 'a')*cell_size_+kLeftMargin,(8 - position.row)*cell_size_+kTopMargin);
 }
 void Game::playersInit()
 {
@@ -157,6 +158,7 @@ void Game::movePiece(const BoardIndex & click_position)
 	if (move_done)
 	{
 		clearInfoForClickedPiece();
+		checkForWin();
 		changeTurn();
 		piece_clicked_ = false;
 	}
@@ -164,15 +166,15 @@ void Game::movePiece(const BoardIndex & click_position)
 void Game::checkForWin()
 {
 	if (white_player_.empty())
-		game_state = BLACK_WINS;
+		game_state_ = BLACK_WINS;
 	else if (black_player_.empty())
-		game_state = WHITE_WINS;
+		game_state_ = WHITE_WINS;
 	else if (!checkPlayerHasMove(white_player_))
-		game_state = BLACK_WINS;
+		game_state_ = BLACK_WINS;
 	else if (!checkPlayerHasMove(black_player_))
-		game_state = WHITE_WINS;
+		game_state_ = WHITE_WINS;
 	else
-		game_state = NOT_ENDED;
+		game_state_ = NOT_ENDED;
 }
 void Game::checkPiecesForBeating()
 {
@@ -199,7 +201,7 @@ void Game::transformIntoKings()
 }
 BoardIndex Game::clickPositionInBoard(int x, int y)
 {
-	float row = y / cell_size_, column = x / cell_size_;
+	float row = (y-kTopMargin) / cell_size_, column = (x-kLeftMargin) / cell_size_;
 	return BoardIndex(int(column) + 'a', 8 - int(row));
 }
 void Game::Run()
@@ -217,6 +219,21 @@ void Game::Run()
 			// "close requested" event: we close the window
 			if (event.type == sf::Event::Closed)
 				window.close();
+			if (event.type == sf::Event::KeyReleased)
+			{
+				switch (event.key.code)
+				{
+				case sf::Keyboard::S:
+					saveToFile("position.check");
+					break;
+				case sf::Keyboard::R:
+					game_ended = false;
+					loadFromFile("position.check");
+					break;
+				}
+
+
+			}
 			if (!game_ended)
 			{
 				if (event.type == sf::Event::MouseButtonReleased)
@@ -224,23 +241,23 @@ void Game::Run()
 					BoardIndex click_position = clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
 					std::cout << click_position << endl;
 					processMouseClick(click_position);
-					checkForWin();
-					if (!game_ended && game_state != NOT_ENDED)
-					{
-						cout << (game_state == WHITE_WINS ? "White wins!\n" : "Black wins\n") << endl;
-						game_ended = true;
-					}
+					
 				}
 			}
 		}
 
 		// clear the window with black color
 		window.clear(sf::Color(255, 228, 170, 255));
-
+		if (!game_ended && game_state_ != NOT_ENDED)
+		{
+			cout << (game_state_ == WHITE_WINS ? "White wins!\n" : "Black wins\n") << endl;
+			game_ended = true;
+		}
 		// draw everything here...
 		// window.draw(...);
 		drawBoard();
 		drawPieces();
+		drawWinState();
 		// end the current frame
 		window.display();
 	}
@@ -257,24 +274,63 @@ void Game::setBlackTurn()
 	cur_player_ = &black_player_;
 	another_player_ = &white_player_;
 }
+void Game::loadFromFile(std::string file_name)
+{
+	std::ifstream in(file_name);
+	clearAllStates();
+	std::stringstream str_stream;
+	std::string str;
+	getline(in, str);
+	str_stream << str;
+	CheckersPiece piece_to_input;
+	while (str_stream)
+	{
+		str_stream >> piece_to_input;
+		white_player_.push_back(piece_to_input);
+	}
+	str_stream.clear();
+	getline(in, str);
+	str_stream << str;
+	while (str_stream)
+	{
+		str_stream >> piece_to_input;
+		black_player_.push_back(piece_to_input);
+	}
+	in >> white_turn_;
+	if (white_turn_)
+		setWhiteTurn();
+	else
+		setBlackTurn();
+	in.close();
+}
+void Game::saveToFile(std::string file_name)
+{
+	std::ofstream out(file_name);
+	for (auto x : white_player_)
+		out << x << ' ';
+	out << endl;
+	for (auto x : black_player_)
+		out << x << ' ';
+	out << endl;
+	out << white_turn_;
+	out.close();
+}
 void Game::drawBoard()
 {
 	sf::RectangleShape cell;
 	sf::Font text_font;
 	text_font.loadFromFile("times.ttf");
 
-	sf::Text board_coodinates("", text_font);
+	sf::Text board_coodinates("", text_font,25);
 	board_coodinates.setFillColor(sf::Color::Black);
-
 	sf::Vector2u window_size = window.getSize();
-	unsigned int board_size = std::min(window_size.x - 2 * kTextMargin, window_size.y - 3 * kTextMargin);
+	unsigned int board_size = window_size.x - 2 * kTextMargin;
 	cell_size_ = board_size / 8.0;
-
 	cell.setSize(sf::Vector2f(cell_size_, cell_size_));
 	for (int i = 0; i < 8; i++) //i - row
 		for (int j = 0; j < 8; j++) //j - column
 		{	
-			cell.setPosition(sf::Vector2f(cell_size_*j+kTextMargin, cell_size_*i+2*kTextMargin));	
+			cell.setPosition(getRealPosition(BoardIndex('a'+j,8-i)));	
 			sf::Color cell_color;
 			std::string coord;
 			if ((i + j) % 2 != 0)
@@ -290,18 +346,18 @@ void Game::drawBoard()
 				//coord = 'a' + i;
 				coord += std::to_string(8-i);
 				board_coodinates.setString(coord);
-				board_coodinates.setPosition(sf::Vector2f(0, cell_size_*(i+0.5)-board_coodinates.getCharacterSize()/2));
+				board_coodinates.setPosition((kLeftMargin - board_coodinates.getGlobalBounds().width)/2,
+					cell_size_*(i+0.5)-board_coodinates.getCharacterSize()/2+kTopMargin);
 				window.draw(board_coodinates);
 			}
 			if (i == 0)
 			{
 				coord = 'a' + j;
 				board_coodinates.setString(coord);
-				board_coodinates.setPosition(sf::Vector2f(cell_size_*(j + 0.5) - board_coodinates.getCharacterSize()/2, 0));
+				board_coodinates.setPosition(sf::Vector2f(cell_size_*(j + 0.5) - board_coodinates.getCharacterSize()/2+kLeftMargin, 
+					0));
 				window.draw(board_coodinates);
 			}
-
-			board_coodinates.setString(coord);
 		}
 	const float kThickness = 5.0;
 	cell.setSize(sf::Vector2f(cell_size_ - kThickness*2, cell_size_ - kThickness*2));
@@ -312,14 +368,28 @@ void Game::drawBoard()
 		cell.setPosition(sf::Vector2f(cell_position.x+kThickness,cell_position.y+kThickness));
 		cell.setFillColor(sf::Color(0, 0, 0, 0));
 		cell.setOutlineColor(sf::Color::Yellow);
-		cell.setOutlineThickness(5.0);
+		cell.setOutlineThickness(kThickness);
 		window.draw(cell);
 	}
 	cell.setSize(sf::Vector2f(board_size, board_size));
-	cell.setPosition(sf::Vector2f(kTextMargin, 2 * kTextMargin));
+	cell.setPosition(getRealPosition({ 'a',8 }));
 	cell.setFillColor(sf::Color(0, 0, 0, 0));
 	cell.setOutlineColor(sf::Color::Black);
 	cell.setOutlineThickness(1.0);
+	window.draw(cell);
+	//cell.setFillColor(sf::Color::Green);
+	cell.setSize(sf::Vector2f(kRightMargin / 2, board_size / 2));
+	cell.setOutlineThickness(1.0);
+	if (white_turn_)
+	{
+		cell.setFillColor(sf::Color::White);
+		cell.setPosition(sf::Vector2f(kLeftMargin + board_size + (kLeftMargin - cell.getSize().x) / 2, kTopMargin + board_size / 2));
+	}
+	else
+	{
+		cell.setFillColor(sf::Color::Black);
+		cell.setPosition(sf::Vector2f(kLeftMargin + board_size + (kLeftMargin - cell.getSize().x) / 2, kTopMargin));
+	}
 	window.draw(cell);
 }
 
@@ -338,6 +408,39 @@ void Game::drawPieces()
 	drawPlayersPieces(black_player_, black_piece,black_piece_king);
 }
 
+void Game::drawWinState()
+{
+	sf::Font text_font;
+	text_font.loadFromFile("times.ttf");
+	float board_size = cell_size_ * 8;
+	sf::Text win_text("", text_font, 100);
+	win_text.setPosition(sf::Vector2f(
+		kLeftMargin + (board_size / 2 - win_text.getGlobalBounds().width),
+		kTopMargin + (board_size / 2 - win_text.getGlobalBounds().height)));
+//	cout << win_text.getGlobalBounds().width << ' ' << win_text.getGlobalBounds().height << endl;
+	switch (game_state_)
+	{
+	case WHITE_WINS:
+		win_text.setString("White wins!");
+		win_text.setOutlineThickness(1.0);
+		win_text.setOutlineColor(sf::Color::Black);
+		win_text.setPosition(sf::Vector2f(
+			kLeftMargin + (board_size - win_text.getGlobalBounds().width)/2,
+			kTopMargin + (board_size - win_text.getGlobalBounds().height)/2));
+		window.draw(win_text);
+		break;
+	case BLACK_WINS:
+		win_text.setFillColor(sf::Color::Black);
+		win_text.setString("Black wins!");
+		win_text.setPosition(sf::Vector2f(
+			kLeftMargin + (board_size - win_text.getGlobalBounds().width)/2,
+			kTopMargin + (board_size - win_text.getGlobalBounds().height)/2));
+		window.draw(win_text);
+		break;
+	}
+	
+}
+
 bool Game::checkPlayerHasMove(const vector_pieces & player)
 {
 	const_pieces_iterator iter = player.begin();
@@ -350,5 +453,17 @@ bool Game::checkPlayerHasMove(const vector_pieces & player)
 				cur_has_move = false;
 		++iter;
 	} while (iter != player.end() && !cur_has_move);
-	return iter != player.end();
+	return cur_has_move;
+}
+
+void Game::clearAllStates()
+{
+	white_player_.clear();
+	black_player_.clear();
+	piece_clicked_ = false;
+	setWhiteTurn();
+	game_state_ = NOT_ENDED;
+	piece_firstly_clicked_ = nullptr;
+	must_beat_ = false;
+	clearInfoForClickedPiece();
 }

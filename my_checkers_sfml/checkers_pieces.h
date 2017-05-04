@@ -5,6 +5,7 @@
 #include <SFML/Graphics.hpp>
 using std::vector;
 using std::ostream;
+using std::istream;
 using std::pair;
 using std::endl;
 using std::cout;
@@ -33,6 +34,7 @@ struct BoardIndex
 inline bool isInBoard(const BoardIndex& to_check) { return to_check.isInBoard(); }
 
 ostream& operator<<(ostream& os, const BoardIndex& to_show);
+istream& operator>>(istream& is, BoardIndex& to_input);
 
 pieces_iterator checkForPieces(const BoardIndex& position, vector_pieces& pieces);
 
@@ -73,5 +75,6 @@ public:
 	{
 		return !(a == b);
 	}
-
+	friend ostream& operator<<(ostream& os, const CheckersPiece& piece_to_show);
+	friend istream& operator>>(istream& is, CheckersPiece& piece_to_input);
 };
