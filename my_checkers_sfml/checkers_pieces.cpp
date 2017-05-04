@@ -21,7 +21,7 @@ void addPossibleMoveBeat(BoardIndex position,
 		}
 	}
 }
-vector<move_with_piece> CheckersPiece::possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces)
+vector<move_with_piece> CheckersPiece::possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces) const
 {
 	vector<move_with_piece> possible_moves;
 	addPossibleMoveBeat(position_, &BoardIndex::upperLeft, player_pieces, opponent_pieces, possible_moves);
@@ -59,6 +59,12 @@ vector<BoardIndex> CheckersPiece::possibleMoves( vector_pieces& player_pieces, v
 		}
 	}
 	return possible_moves;
+}
+
+void CheckersPiece::transformIntoKingIfPossible()
+{
+	if ((color_ == WHITE && position_.row == 8) || (color_ == BLACK && position_.row == 1))
+		is_king_ = true;
 }
 
 

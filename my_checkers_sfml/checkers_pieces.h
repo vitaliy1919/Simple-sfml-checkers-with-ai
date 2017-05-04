@@ -47,7 +47,7 @@ private:
 public:
 	enum { BLACK, WHITE };
 	CheckersPiece() :position_(0, 0), color_(0), is_king_(false) {}
-	vector<move_with_piece> possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces);
+	vector<move_with_piece> possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces) const;
 	vector<BoardIndex> possibleMoves(vector_pieces& player_pieces,  vector_pieces& opponent_pieces) const;
 	BoardIndex getPosition() const { return position_; }
 	void setPosition(const BoardIndex& board_index) { position_ = board_index;}
@@ -56,6 +56,7 @@ public:
 	bool isKing() const { return is_king_; }
 	void makeKing() { is_king_ = true; }
 	void makePiece() { is_king_ = false; }
+	void transformIntoKingIfPossible();
 	friend bool operator==(const CheckersPiece& a, const CheckersPiece& b)
 	{
 		return a.position_ == b.position_ && a.color_ == b.color_ && a.is_king_ == b.is_king_;

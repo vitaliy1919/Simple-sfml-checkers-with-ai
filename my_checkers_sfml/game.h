@@ -1,5 +1,15 @@
 #pragma once
 #include "checkers_pieces.h"
+template <typename T>
+inline void appendVector(vector<T>& dest, const vector<T>& source)
+{
+	dest.insert(dest.end(), source.begin(), source.end());
+}
+inline void appendVector(vector<BoardIndex>& dest, const vector_pieces& source)
+{
+	for (auto x : source)
+		dest.push_back(x.getPosition());
+}
 
 class Game
 {
@@ -28,6 +38,8 @@ private:
 	sf::Vector2f getRealPosition(const BoardIndex& position) const;
 	BoardIndex clickPositionInBoard(int x, int y);
 
+	enum {NOT_ENDED,WHITE_WINS,BLACK_WINS};
+	int game_state;
 	void drawPlayersPieces(const vector_pieces player, sf::Texture piece_texture);
 	void drawBoard();
 	void drawPieces();
@@ -35,16 +47,18 @@ private:
 	void playersInit();
 
 	void checkPiecesForBeating();
+	void transformIntoKings();
 	void changeTurn();
 
 	void clearInfoForClickedPiece();
 	void processMouseClick(const BoardIndex click_position);
 	void buildPossibleMoves(CheckersPiece& clicked_piece);
 	void movePiece(const BoardIndex& click_position);
-	
+	void checkForWin();
+	bool checkPlayerHasMove(const vector_pieces& player);
 	
 public:
-	Game() :window(sf::VideoMode(700, 700), "My window"), 
+	Game() :window(sf::VideoMode(700, 700), "Checkers"), 
 		white_player_(12), 
 		black_player_(12), 
 		white_turn_(true),
@@ -57,7 +71,8 @@ public:
 		cur_player_(&white_player_),
 		another_player_(&black_player_),
 		pieces_that_can_beat_(),
-		must_beat_(false){}
+		must_beat_(false),
+		game_state(NOT_ENDED){}
 	
 	void Run();
 	vector_pieces getWhitePlayer() const { return white_player_; }

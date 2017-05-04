@@ -4,10 +4,13 @@ void Game::drawPlayersPieces(const vector_pieces player, sf::Texture piece_textu
 {
 	sf::Sprite piece;
 	piece.setTexture(piece_texture);
-	piece.setScale(sf::Vector2f(cell_size_ /	1.2/ piece_texture.getSize().x, cell_size_ /1.2/ piece_texture.getSize().y));
-	for (auto white_piece : player)
+	piece.setScale(sf::Vector2f(cell_size_ /1.2/ piece_texture.getSize().x, cell_size_ /1.2/ piece_texture.getSize().y));
+	for (auto players_piece : player)
 	{
-		piece.setPosition(getRealPosition(white_piece.getPosition()));
+		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
+		piece_position.x += cell_size_ / 2 - piece.getGlobalBounds().height / 2;
+		piece_position.y += cell_size_ / 2 - piece.getGlobalBounds().width / 2;
+		piece.setPosition(piece_position);
 		window.draw(piece);
 	}
 }
@@ -45,6 +48,7 @@ void Game::changeTurn()
 	white_turn_ = !white_turn_;
 	std::swap(cur_player_, another_player_);
 	checkPiecesForBeating();
+	transformIntoKings();
 }
 void Game::clearInfoForClickedPiece()
 {
@@ -113,6 +117,7 @@ void Game::movePiece(const BoardIndex & click_position)
 	if (clicked_piece_player_iter != cur_player_->end() && *clicked_piece_player_iter == *piece_firstly_clicked_)
 	{
 		clearInfoForClickedPiece();
+		appendVector(hightlighted_cells_, pieces_that_can_beat_);
 		piece_clicked_ = false;
 	}
 	if (!possible_beat_moves_.empty())
@@ -150,6 +155,19 @@ void Game::movePiece(const BoardIndex & click_position)
 		piece_clicked_ = false;
 	}
 }
+void Game::checkForWin()
+{
+	if (white_player_.empty())
+		game_state = BLACK_WINS;
+	else if (black_player_.empty())
+		game_state = WHITE_WINS;
+	else if (!checkPlayerHasMove(white_player_))
+		game_state = BLACK_WINS;
+	else if (!checkPlayerHasMove(black_player_))
+		game_state = WHITE_WINS;
+	else
+		game_state = NOT_ENDED;
+}
 void Game::checkPiecesForBeating()
 {
 	pieces_that_can_beat_.clear();
@@ -168,6 +186,11 @@ void Game::checkPiecesForBeating()
 	else
 		must_beat_ = false;
 }
+void Game::transformIntoKings()
+{
+	for (auto &x : *cur_player_)
+		x.transformIntoKingIfPossible();
+}
 BoardIndex Game::clickPositionInBoard(int x, int y)
 {
 	float row = y / cell_size_, column = x / cell_size_;
@@ -177,6 +200,7 @@ void Game::Run()
 {
 	playersInit();
 	checkPiecesForBeating();
+	bool game_ended = false;
 	while (window.isOpen())
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
@@ -187,24 +211,20 @@ void Game::Run()
 			// "close requested" event: we close the window
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (event.type == sf::Event::MouseButtonReleased)
+			if (!game_ended)
 			{
-				BoardIndex click_position = clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
-				std::cout << click_position << endl;
-				processMouseClick(click_position);
-				/*if (!piece_clicked_)
+				if (event.type == sf::Event::MouseButtonReleased)
 				{
-					pieces_iterator iter = click_position.checkForPieces(*cur_player_);
-					if (iter != cur_player_->end())
+					BoardIndex click_position = clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
+					std::cout << click_position << endl;
+					processMouseClick(click_position);
+					checkForWin();
+					if (!game_ended && game_state != NOT_ENDED)
 					{
-						piece_clicked_ = true;
-						hightlighted_cells_.push_back(click_position);
-						buildPossibleMoves(*iter);
+						cout << (game_state == WHITE_WINS ? "White wins!\n" : "Black wins\n") << endl;
+						game_ended = true;
 					}
 				}
-				else
-					movePiece(click_position);*/
-
 			}
 		}
 
@@ -238,10 +258,12 @@ void Game::drawBoard()
 			cell.setPosition(sf::Vector2f(cell_size_*j, cell_size_*i));	
 			sf::Color cell_color;
 			std::string coord;
-			if ((i + j )% 2 != 0)
+			if ((i + j) % 2 != 0)
 				cell_color = sf::Color(209, 139, 71, 255);
+				//cell_color = sf::Color::Blue;
 			else
 				cell_color = sf::Color(255, 228, 170, 255);
+				//cell_color = sf::Color::Yellow;
 			cell.setFillColor(cell_color);
 			window.draw(cell);
 			if (j == 0)
@@ -285,4 +307,19 @@ void Game::drawPieces()
 	black_piece.setSmooth(true);
 	drawPlayersPieces(white_player_, white_piece);
 	drawPlayersPieces(black_player_, black_piece);
+}
+
+bool Game::checkPlayerHasMove(const vector_pieces & player)
+{
+	const_pieces_iterator iter = player.begin();
+	bool cur_has_move = true;
+	do
+	{
+		cur_has_move = true;
+		if (iter->possibleBeatMoves(*cur_player_, *another_player_).empty())
+			if (iter->possibleMoves(*cur_player_, *another_player_).empty())
+				cur_has_move = false;
+		++iter;
+	} while (iter != player.end() && !cur_has_move);
+	return iter != player.end();
 }
