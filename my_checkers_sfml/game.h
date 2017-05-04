@@ -1,5 +1,6 @@
 #pragma once
 #include "checkers_pieces.h"
+#include <fstream>
 template <typename T>
 inline void appendVector(vector<T>& dest, const vector<T>& source)
 {
@@ -14,7 +15,7 @@ inline void appendVector(vector<BoardIndex>& dest, const vector_pieces& source)
 class Game
 {
 private:
-	static const int kTextMargin = 20;
+	static const int kTextMargin = 30;
 	vector_pieces white_player_;
 	vector_pieces black_player_;
 	
@@ -40,7 +41,7 @@ private:
 
 	enum {NOT_ENDED,WHITE_WINS,BLACK_WINS};
 	int game_state;
-	void drawPlayersPieces(const vector_pieces player, sf::Texture piece_texture);
+	void drawPlayersPieces(const vector_pieces player, const sf::Texture& piece_texture, const sf::Texture& piece_king_texture);
 	void drawBoard();
 	void drawPieces();
 
@@ -58,7 +59,7 @@ private:
 	bool checkPlayerHasMove(const vector_pieces& player);
 	
 public:
-	Game() :window(sf::VideoMode(700, 700), "Checkers"), 
+	Game() :
 		white_player_(12), 
 		black_player_(12), 
 		white_turn_(true),
@@ -72,9 +73,20 @@ public:
 		another_player_(&black_player_),
 		pieces_that_can_beat_(),
 		must_beat_(false),
-		game_state(NOT_ENDED){}
+		game_state(NOT_ENDED)
+	{
+		sf::VideoMode video_mode;
+		video_mode = video_mode.getDesktopMode();
+		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);
+		window.create(sf::VideoMode(window_size + 2 * kTextMargin, window_size + 3 * kTextMargin), "Checkers");
+		window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
+	}
 	
 	void Run();
 	vector_pieces getWhitePlayer() const { return white_player_; }
 	vector_pieces getBlackPlayer() const { return black_player_; }
+	void setWhiteTurn();
+	void setBlackTurn();
+	void loadFromFile(std::string file_name);
+	void saveToFile(std::string file_name);
 };

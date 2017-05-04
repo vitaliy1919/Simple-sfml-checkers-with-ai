@@ -1,15 +1,18 @@
 #include "Game.h"
 #include <algorithm>
-void Game::drawPlayersPieces(const vector_pieces player, sf::Texture piece_texture)
+void Game::drawPlayersPieces(const vector_pieces player, const sf::Texture& piece_texture,const sf::Texture& piece_king_texture)
 {
 	sf::Sprite piece;
-	piece.setTexture(piece_texture);
-	piece.setScale(sf::Vector2f(cell_size_ /1.2/ piece_texture.getSize().x, cell_size_ /1.2/ piece_texture.getSize().y));
+	piece.setScale(sf::Vector2f(cell_size_ / (1.2*piece_texture.getSize().x), cell_size_ / (1.2* piece_texture.getSize().y)));
 	for (auto players_piece : player)
 	{
+		if (players_piece.isKing())
+			piece.setTexture(piece_king_texture);
+		else
+			piece.setTexture(piece_texture);
 		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
-		piece_position.x += cell_size_ / 2 - piece.getGlobalBounds().height / 2;
-		piece_position.y += cell_size_ / 2 - piece.getGlobalBounds().width / 2;
+		piece_position.x += cell_size_ / 2 - piece.getGlobalBounds().height / 2 + kTextMargin;
+		piece_position.y += cell_size_ / 2 - piece.getGlobalBounds().width / 2 + 2* kTextMargin;
 		piece.setPosition(piece_position);
 		window.draw(piece);
 	}
@@ -48,7 +51,8 @@ void Game::changeTurn()
 	white_turn_ = !white_turn_;
 	std::swap(cur_player_, another_player_);
 	checkPiecesForBeating();
-	transformIntoKings();
+	
+	drawPieces();
 }
 void Game::clearInfoForClickedPiece()
 {
@@ -129,6 +133,7 @@ void Game::movePiece(const BoardIndex & click_position)
 		{
 			piece_firstly_clicked_->setPosition(click_position);
 			another_player_->erase(possible_beat_moves_[i].second);
+			transformIntoKings();
 			possible_beat_moves_ = piece_firstly_clicked_->possibleBeatMoves(*cur_player_, *another_player_);
 			if (!possible_beat_moves_.empty())
 			{
@@ -145,6 +150,7 @@ void Game::movePiece(const BoardIndex & click_position)
 		if (std::find(possible_moves_.begin(), possible_moves_.end(), click_position) != possible_moves_.end())
 		{
 			piece_firstly_clicked_->setPosition(click_position);
+			transformIntoKings();
 			move_done = true;
 		}
 	}
@@ -229,7 +235,7 @@ void Game::Run()
 		}
 
 		// clear the window with black color
-		window.clear(sf::Color::White);
+		window.clear(sf::Color(255, 228, 170, 255));
 
 		// draw everything here...
 		// window.draw(...);
@@ -238,6 +244,18 @@ void Game::Run()
 		// end the current frame
 		window.display();
 	}
+}
+void Game::setWhiteTurn()
+{
+	white_turn_ = true;
+	cur_player_ = &white_player_;
+	another_player_ = &black_player_;
+}
+void Game::setBlackTurn()
+{
+	white_turn_ = false;
+	cur_player_ = &black_player_;
+	another_player_ = &white_player_;
 }
 void Game::drawBoard()
 {
@@ -249,13 +267,14 @@ void Game::drawBoard()
 	board_coodinates.setFillColor(sf::Color::Black);
 
 	sf::Vector2u window_size = window.getSize();
-	cell_size_ = (std::min(window_size.x, window_size.y)) / 8.0;
+	unsigned int board_size = std::min(window_size.x - 2 * kTextMargin, window_size.y - 3 * kTextMargin);
+	cell_size_ = board_size / 8.0;
 
 	cell.setSize(sf::Vector2f(cell_size_, cell_size_));
 	for (int i = 0; i < 8; i++) //i - row
 		for (int j = 0; j < 8; j++) //j - column
 		{	
-			cell.setPosition(sf::Vector2f(cell_size_*j, cell_size_*i));	
+			cell.setPosition(sf::Vector2f(cell_size_*j+kTextMargin, cell_size_*i+2*kTextMargin));	
 			sf::Color cell_color;
 			std::string coord;
 			if ((i + j) % 2 != 0)
@@ -296,17 +315,27 @@ void Game::drawBoard()
 		cell.setOutlineThickness(5.0);
 		window.draw(cell);
 	}
+	cell.setSize(sf::Vector2f(board_size, board_size));
+	cell.setPosition(sf::Vector2f(kTextMargin, 2 * kTextMargin));
+	cell.setFillColor(sf::Color(0, 0, 0, 0));
+	cell.setOutlineColor(sf::Color::Black);
+	cell.setOutlineThickness(1.0);
+	window.draw(cell);
 }
 
 void Game::drawPieces()
 {
-	sf::Texture white_piece, black_piece;
+	sf::Texture white_piece, black_piece,white_piece_king,black_piece_king;
 	white_piece.loadFromFile("white_piece.png");
+	white_piece_king.loadFromFile("white_piece_king.png");
 	black_piece.loadFromFile("black_piece.png");
+	black_piece_king.loadFromFile("black_piece_king.png");
 	white_piece.setSmooth(true);
+	white_piece_king.setSmooth(true);
 	black_piece.setSmooth(true);
-	drawPlayersPieces(white_player_, white_piece);
-	drawPlayersPieces(black_player_, black_piece);
+	black_piece_king.setSmooth(true);
+	drawPlayersPieces(white_player_, white_piece,white_piece_king);
+	drawPlayersPieces(black_player_, black_piece,black_piece_king);
 }
 
 bool Game::checkPlayerHasMove(const vector_pieces & player)

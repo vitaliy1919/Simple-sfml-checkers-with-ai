@@ -44,6 +44,14 @@ private:
 	BoardIndex position_;
 	int color_;
 	bool is_king_;
+
+	void addPossibleMoveBeat(
+		BoardIndex(BoardIndex::*pf)() const,
+		vector_pieces& player_pieces, vector_pieces& opponent_pieces,
+		vector<move_with_piece>& possible_moves) const;
+	void addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
+		vector_pieces& player_pieces, vector_pieces& opponent_pieces,
+		vector<BoardIndex>& possible_moves) const;
 public:
 	enum { BLACK, WHITE };
 	CheckersPiece() :position_(0, 0), color_(0), is_king_(false) {}
