@@ -5,7 +5,7 @@
 
 void CheckersPiece::addPossibleMoveBeat(
 	BoardIndex(BoardIndex::*pf)() const,
-	vector_pieces& player_pieces, vector_pieces& opponent_pieces,
+	vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board,
 	vector<move_with_piece>& possible_moves) const
 {
 	BoardIndex position_to_check = (position_.*pf)();
@@ -16,8 +16,7 @@ void CheckersPiece::addPossibleMoveBeat(
 			pieces_iterator piece_to_beat_iter = position_to_check.checkForPieces(opponent_pieces);
 			position_to_check = (position_to_check.*pf)();
 			if (piece_to_beat_iter != opponent_pieces.end() && position_to_check.isInBoard() &&
-				!position_to_check.checkForPiecesBool(opponent_pieces) &&
-				!position_to_check.checkForPiecesBool(player_pieces))
+				!position_to_check.checkForPiecesBool(board))
 			{
 				possible_moves.push_back({ position_to_check,piece_to_beat_iter });
 			}
@@ -25,43 +24,35 @@ void CheckersPiece::addPossibleMoveBeat(
 	}
 	else
 	{
-		bool is_player_piece = position_to_check.checkForPiecesBool(player_pieces),
-			is_opponent_piece = position_to_check.checkForPiecesBool(opponent_pieces);
 		while (position_to_check.isInBoard() &&
-			!is_player_piece && !is_opponent_piece)
-		{
+			!position_to_check.checkForPiecesBool(board))
 			position_to_check = (position_to_check.*pf)();
-			is_player_piece = position_to_check.checkForPiecesBool(player_pieces);
-			is_opponent_piece = position_to_check.checkForPiecesBool(opponent_pieces);
-		}
-		if (position_to_check.isInBoard() && is_opponent_piece)
+		int color_of_cur_player = player_pieces.front().getColor();
+		if (position_to_check.isInBoard() && 
+			position_to_check.checkForPieces(board) != color_of_cur_player)
 		{
 			pieces_iterator piece_to_beat_iter = position_to_check.checkForPieces(opponent_pieces);
 			position_to_check = (position_to_check.*pf)();
-			is_player_piece = position_to_check.checkForPiecesBool(player_pieces);
-			is_opponent_piece = position_to_check.checkForPiecesBool(opponent_pieces);
 			while (position_to_check.isInBoard() &&
-				!is_player_piece && !is_opponent_piece)
+				!position_to_check.checkForPiecesBool(board))
 			{
 				possible_moves.push_back({ position_to_check,piece_to_beat_iter });
 				position_to_check = (position_to_check.*pf)();
-				is_player_piece = position_to_check.checkForPiecesBool(player_pieces);
-				is_opponent_piece = position_to_check.checkForPiecesBool(opponent_pieces);
 			}
 		}
 	}
 }
-vector<move_with_piece> CheckersPiece::possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces) const
+vector<move_with_piece> CheckersPiece::possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board) const
 {
 	vector<move_with_piece> possible_moves;
-	addPossibleMoveBeat(&BoardIndex::upperLeft, player_pieces, opponent_pieces, possible_moves);
-	addPossibleMoveBeat(&BoardIndex::upperRight, player_pieces, opponent_pieces, possible_moves);
-	addPossibleMoveBeat(&BoardIndex::bottomLeft, player_pieces, opponent_pieces, possible_moves);
-	addPossibleMoveBeat(&BoardIndex::bottomRight, player_pieces, opponent_pieces, possible_moves);
+	addPossibleMoveBeat(&BoardIndex::upperLeft, player_pieces, opponent_pieces, board, possible_moves);
+	addPossibleMoveBeat(&BoardIndex::upperRight, player_pieces, opponent_pieces, board, possible_moves);
+	addPossibleMoveBeat(&BoardIndex::bottomLeft, player_pieces, opponent_pieces, board, possible_moves);
+	addPossibleMoveBeat(&BoardIndex::bottomRight, player_pieces, opponent_pieces, board, possible_moves);
 	return possible_moves;
 }
 void CheckersPiece::addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
-	vector_pieces& player_pieces, vector_pieces& opponent_pieces, 
+	vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board,
 	vector<BoardIndex>& possible_moves) const
 {
 	BoardIndex position_to_check = (position_.*pf)();
@@ -69,52 +60,72 @@ void CheckersPiece::addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
 	{
 		if (position_to_check.isInBoard())
 		{
-			if (!position_to_check.checkForPiecesBool(opponent_pieces) &&
-				!position_to_check.checkForPiecesBool(player_pieces))
+			if (!position_to_check.checkForPiecesBool(board))
 				possible_moves.push_back(position_to_check);
 		}
 	}
 	else
 	{
 		while (position_to_check.isInBoard() && 
-			!position_to_check.checkForPiecesBool(player_pieces) &&
-			!position_to_check.checkForPiecesBool(opponent_pieces))
+			!position_to_check.checkForPiecesBool(board))
 		{
 			possible_moves.push_back(position_to_check);
 			position_to_check = (position_to_check.*pf)();
 		}
 	}
 }
-vector<BoardIndex> CheckersPiece::possibleMoves( vector_pieces& player_pieces, vector_pieces& opponent_pieces) const
+vector<BoardIndex> CheckersPiece::possibleMoves( vector_pieces& player_pieces, vector_pieces& opponent_pieces,Board &board) const
 {
 	vector<BoardIndex> possible_moves;
 	if (!is_king_)
 	{
 		if (color_ == WHITE)
 		{
-			addPossibleMove(&BoardIndex::upperLeft, player_pieces,opponent_pieces,possible_moves);
-			addPossibleMove(&BoardIndex::upperRight, player_pieces, opponent_pieces, possible_moves);
+			addPossibleMove(&BoardIndex::upperLeft, player_pieces,opponent_pieces, board, possible_moves);
+			addPossibleMove(&BoardIndex::upperRight, player_pieces, opponent_pieces, board, possible_moves);
 		}
 		else
 		{
-			addPossibleMove(&BoardIndex::bottomLeft, player_pieces, opponent_pieces, possible_moves);
-			addPossibleMove(&BoardIndex::bottomRight, player_pieces, opponent_pieces, possible_moves);
+			addPossibleMove(&BoardIndex::bottomLeft, player_pieces, opponent_pieces, board, possible_moves);
+			addPossibleMove(&BoardIndex::bottomRight, player_pieces, opponent_pieces, board, possible_moves);
 		}
 	}
 	else
 	{
-		addPossibleMove(&BoardIndex::upperLeft, player_pieces, opponent_pieces, possible_moves);
-		addPossibleMove(&BoardIndex::upperRight, player_pieces, opponent_pieces, possible_moves);
-		addPossibleMove(&BoardIndex::bottomLeft, player_pieces, opponent_pieces, possible_moves);
-		addPossibleMove(&BoardIndex::bottomRight, player_pieces, opponent_pieces, possible_moves);
+		addPossibleMove(&BoardIndex::upperLeft, player_pieces, opponent_pieces, board, possible_moves);
+		addPossibleMove(&BoardIndex::upperRight, player_pieces, opponent_pieces, board, possible_moves);
+		addPossibleMove(&BoardIndex::bottomLeft, player_pieces, opponent_pieces, board, possible_moves);
+		addPossibleMove(&BoardIndex::bottomRight, player_pieces, opponent_pieces, board, possible_moves);
 	}
 	return possible_moves;
 }
 
-void CheckersPiece::transformIntoKingIfPossible()
+bool CheckersPiece::transformIntoKingIfPossible()
 {
 	if ((color_ == WHITE && position_.row == 8) || (color_ == BLACK && position_.row == 1))
+	{
 		is_king_ = true;
+		return true;
+	}
+	return false;
+}
+
+int CheckersPiece::getCheckersType() const
+{
+	if (color_ == WHITE)
+	{
+		if (is_king_)
+			return static_cast<int>(CheckersType::WHITE_KING);
+		else
+			return static_cast<int>(CheckersType::WHITE_PIECE);
+	}
+	else
+	{
+		if (is_king_)
+			return static_cast<int>(CheckersType::BLACK_KING);
+		else
+			return static_cast<int>(CheckersType::BLACK_PIECE);
+	}
 }
 
 
@@ -155,9 +166,21 @@ pieces_iterator BoardIndex::checkForPieces(vector_pieces & pieces) const
 	return iter;
 }
 
+int BoardIndex::checkForPieces(const Board & board) const
+{
+	int piece = board.getPiece(*this);
+	if (piece == 0)
+		return -1;
+	else if (piece == static_cast<int>(CheckersType::WHITE_PIECE) ||
+		piece == static_cast<int>(CheckersType::WHITE_KING))
+		return CheckersPiece::WHITE;
+	else
+		return CheckersPiece::BLACK;
+}
+
 bool BoardIndex::checkForPiecesBool(const Board & board) const
 {
-	return board.getPiece(*this) != Board::EMPTY;
+	return board.getPiece(*this) != static_cast<int>(CheckersType::EMPTY);
 }
 
 

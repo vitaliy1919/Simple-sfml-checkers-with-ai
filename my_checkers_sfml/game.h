@@ -22,7 +22,7 @@ private:
 	static const int kBottomMargin = kTextMargin;
 	vector_pieces white_player_;
 	vector_pieces black_player_;
-	
+	Board board_;
 	bool white_turn_;
 	vector_pieces *cur_player_;
 	vector_pieces *another_player_;

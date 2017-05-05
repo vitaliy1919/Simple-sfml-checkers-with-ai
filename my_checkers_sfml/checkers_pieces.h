@@ -13,6 +13,7 @@ using std::cout;
 class CheckersPiece;
 struct BoardIndex;
 struct Board;
+class CheckersBoard;
 typedef vector<CheckersPiece> vector_pieces;
 typedef vector_pieces::iterator pieces_iterator;
 typedef vector_pieces::const_iterator const_pieces_iterator;
@@ -28,7 +29,13 @@ struct BoardIndex
 	BoardIndex bottomLeft() const { return BoardIndex(column - 1, row - 1); }
 	BoardIndex bottomRight() const {return BoardIndex(column + 1, row - 1);}
 	inline bool isInBoard() const { return (column >= 'a' && column <= 'h') && (row >= 1 && row <= 8);}
-	pieces_iterator checkForPieces(vector_pieces& pieces) const;
+
+	//return itetaror to piece (in pieces) on position, if there is no piece, return pieces.end()
+	pieces_iterator checkForPieces(vector_pieces& pieces) const; 
+
+	//return color of piece on position, if position is empty - return -1
+	int checkForPieces(const Board& board) const; 
+	//retun if there is piece on position:
 	bool checkForPiecesBool(vector_pieces& pieces) const { return checkForPieces(pieces) != pieces.end();  }
 	bool checkForPiecesBool(const Board& board) const;
 	//void checkForBeatingAndAddToPossibleMoves(const vector_pieces& pieces, vector<move_with_piece> possible_moves) const;
@@ -39,20 +46,20 @@ istream& operator>>(istream& is, BoardIndex& to_input);
 pieces_iterator checkForPieces(const BoardIndex& position, vector_pieces& pieces);
 inline bool operator==(const BoardIndex& a, const BoardIndex& b) { return (a.column == b.column) && (a.row == b.row); }
 inline bool operator!=(const BoardIndex& a, const BoardIndex& b) { return !(a == b); }
-
+enum class CheckersType:int
+{
+	EMPTY = 0,
+	WHITE_PIECE,
+	BLACK_PIECE,
+	WHITE_KING,
+	BLACK_KING
+};
 struct Board
 {
-	enum
-	{
-		EMPTY,
-		WHITE_PIECE,
-		BLACK_PIECE,
-		WHITE_KING,
-		BLACK_KING
-	};
+	
 	int checkers_map[8][8] = {};
-	int getPiece(const BoardIndex& position) const { return checkers_map[position.row - 1][position.column - 'a'];}
-	int& getPiece(const BoardIndex& position) { return checkers_map[position.row - 1][position.column - 'a']; }
+	int getPiece(const BoardIndex& position) const { return checkers_map[8 - position.row][position.column - 'a'];}
+	int& getPiece(const BoardIndex& position) { return checkers_map[8 - position.row][position.column - 'a']; }
 };
 class CheckersPiece
 {
@@ -63,16 +70,25 @@ private:
 
 	void addPossibleMoveBeat(
 		BoardIndex(BoardIndex::*pf)() const,
-		vector_pieces& player_pieces, vector_pieces& opponent_pieces,
+		vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board,
 		vector<move_with_piece>& possible_moves) const;
 	void addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
-		vector_pieces& player_pieces, vector_pieces& opponent_pieces,
+		vector_pieces& player_pieces, vector_pieces& opponent_pieces,Board& board,
 		vector<BoardIndex>& possible_moves) const;
+	/*void addPossibleMoveBeat(
+		BoardIndex(BoardIndex::*pf)() const,
+		CheckersBoard& board,
+		vector<move_with_piece>& possible_moves) const;
+	void addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
+		CheckersBoard& board,
+		vector<BoardIndex>& possible_moves) const;*/
 public:
 	enum { BLACK, WHITE };
 	CheckersPiece() :position_(0, 0), color_(0), is_king_(false) {}
-	vector<move_with_piece> possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces) const;
-	vector<BoardIndex> possibleMoves(vector_pieces& player_pieces,  vector_pieces& opponent_pieces) const;
+	vector<move_with_piece> possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board) const;
+	vector<BoardIndex> possibleMoves(vector_pieces& player_pieces,  vector_pieces& opponent_pieces, Board& board) const;
+	//vector<move_with_piece> possibleBeatMoves(CheckersBoard& board) const;
+	//vector<BoardIndex> possibleMoves(CheckersBoard& board) const;
 	BoardIndex getPosition() const { return position_; }
 	void setPosition(const BoardIndex& board_index) { position_ = board_index;}
 	void setColor(int color) { color_ = color; }
@@ -80,7 +96,8 @@ public:
 	bool isKing() const { return is_king_; }
 	void makeKing() { is_king_ = true; }
 	void makePiece() { is_king_ = false; }
-	void transformIntoKingIfPossible();
+	bool transformIntoKingIfPossible();
+	int getCheckersType() const;
 	friend bool operator==(const CheckersPiece& a, const CheckersPiece& b)
 	{
 		return a.position_ == b.position_ && a.color_ == b.color_ && a.is_king_ == b.is_king_;
@@ -92,3 +109,4 @@ public:
 	friend ostream& operator<<(ostream& os, const CheckersPiece& piece_to_show);
 	friend istream& operator>>(istream& is, CheckersPiece& piece_to_input);
 };
+#include "checkers_board.h"

@@ -51,7 +51,7 @@ void CheckersBoard::changeTurn()
 
 void CheckersBoard::checkForWin()
 {
-	if (white_player_.empty())
+	/*if (white_player_.empty())
 		game_state_ = BLACK_WINS;
 	else if (black_player_.empty())
 		game_state_ = WHITE_WINS;
@@ -60,7 +60,7 @@ void CheckersBoard::checkForWin()
 	else if (!checkPlayerHasMove(black_player_))
 		game_state_ = WHITE_WINS;
 	else
-		game_state_ = NOT_ENDED;
+		game_state_ = NOT_ENDED;*/
 }
 
 //bool CheckersBoard::checkPlayerHasMove(bool check_white_player)
