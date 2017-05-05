@@ -63,7 +63,7 @@ void Game::clearInfoForClickedPiece()
 }
 void Game::processMouseClick(const BoardIndex click_position)
 {
-	if (piece_clicked_)
+	if (is_piece_clicked_)
 		movePiece(click_position);
 	else
 	{
@@ -79,7 +79,7 @@ void Game::processMouseClick(const BoardIndex click_position)
 					*piece_on_position);
 				if (piece_which_beat != pieces_that_can_beat_.end())
 				{
-					piece_clicked_ = true;
+					is_piece_clicked_ = true;
 					possible_beat_moves_ = piece_on_position->possibleBeatMoves(*cur_player_, *another_player_);
 					piece_firstly_clicked_ = &(*piece_on_position);
 					hightlighted_cells_.clear();
@@ -90,7 +90,7 @@ void Game::processMouseClick(const BoardIndex click_position)
 			}
 			else
 			{
-				piece_clicked_ = true;
+				is_piece_clicked_ = true;
 				piece_firstly_clicked_ = &(*piece_on_position);
 				possible_moves_ = piece_on_position->possibleMoves(*cur_player_, *another_player_);
 				hightlighted_cells_.push_back(piece_on_position->getPosition());
@@ -123,7 +123,7 @@ void Game::movePiece(const BoardIndex & click_position)
 	{
 		clearInfoForClickedPiece();
 		appendVector(hightlighted_cells_, pieces_that_can_beat_);
-		piece_clicked_ = false;
+		is_piece_clicked_ = false;
 	}
 	if (!possible_beat_moves_.empty())
 	{
@@ -160,7 +160,7 @@ void Game::movePiece(const BoardIndex & click_position)
 		clearInfoForClickedPiece();
 		checkForWin();
 		changeTurn();
-		piece_clicked_ = false;
+		is_piece_clicked_ = false;
 	}
 }
 void Game::checkForWin()
@@ -219,6 +219,11 @@ void Game::Run()
 			// "close requested" event: we close the window
 			if (event.type == sf::Event::Closed)
 				window.close();
+			if (event.type == sf::Event::Resized)
+			{
+				window.setSize(sf::Vector2u(event.size.width, event.size.width));
+				window.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
+			}
 			if (event.type == sf::Event::KeyReleased)
 			{
 				switch (event.key.code)
@@ -245,16 +250,12 @@ void Game::Run()
 				}
 			}
 		}
-
-		// clear the window with black color
 		window.clear(sf::Color(255, 228, 170, 255));
 		if (!game_ended && game_state_ != NOT_ENDED)
 		{
 			cout << (game_state_ == WHITE_WINS ? "White wins!\n" : "Black wins\n") << endl;
 			game_ended = true;
 		}
-		// draw everything here...
-		// window.draw(...);
 		drawBoard();
 		drawPieces();
 		drawWinState();
@@ -320,7 +321,6 @@ void Game::drawBoard()
 	sf::RectangleShape cell;
 	sf::Font text_font;
 	text_font.loadFromFile("times.ttf");
-
 	sf::Text board_coodinates("", text_font,25);
 	board_coodinates.setFillColor(sf::Color::Black);
 	sf::Vector2u window_size = window.getSize();
@@ -460,7 +460,7 @@ void Game::clearAllStates()
 {
 	white_player_.clear();
 	black_player_.clear();
-	piece_clicked_ = false;
+	is_piece_clicked_ = false;
 	setWhiteTurn();
 	game_state_ = NOT_ENDED;
 	piece_firstly_clicked_ = nullptr;

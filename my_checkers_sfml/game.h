@@ -34,7 +34,7 @@ private:
 	bool must_beat_;
 	vector_pieces pieces_that_can_beat_;
 
-	bool piece_clicked_;
+	bool is_piece_clicked_;
 	CheckersPiece *piece_firstly_clicked_;
 
 	float cell_size_;
@@ -73,7 +73,7 @@ public:
 		hightlighted_cells_(),
 		possible_beat_moves_(),
 		possible_moves_(),
-		piece_clicked_(false),
+		is_piece_clicked_(false),
 		piece_firstly_clicked_(),
 		cur_player_(&white_player_),
 		another_player_(&black_player_),
@@ -84,7 +84,7 @@ public:
 		sf::VideoMode video_mode;
 		video_mode = video_mode.getDesktopMode();
 		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);
-		window.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers",sf::Style::Close);
+		window.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers"/*,sf::Style::Close*/);
 		window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 	}
 	
