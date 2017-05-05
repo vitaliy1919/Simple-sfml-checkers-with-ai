@@ -38,6 +38,7 @@ private:
 	CheckersPiece *piece_firstly_clicked_;
 
 	float cell_size_;
+	float board_size_;
 	sf::RenderWindow window;
 	
 	sf::Vector2f getRealPosition(const BoardIndex& position) const;
@@ -69,6 +70,7 @@ public:
 		white_player_(12), 
 		black_player_(12), 
 		white_turn_(true),
+		board_size_(700),
 		cell_size_(87.5),
 		hightlighted_cells_(),
 		possible_beat_moves_(),
@@ -84,6 +86,8 @@ public:
 		sf::VideoMode video_mode;
 		video_mode = video_mode.getDesktopMode();
 		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);
+		board_size_ = window_size;
+		cell_size_ = board_size_ / 8;
 		window.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers"/*,sf::Style::Close*/);
 		window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 	}

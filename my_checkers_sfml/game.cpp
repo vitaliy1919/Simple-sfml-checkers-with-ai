@@ -201,7 +201,8 @@ void Game::transformIntoKings()
 }
 BoardIndex Game::clickPositionInBoard(int x, int y)
 {
-	float row = (y-kTopMargin) / cell_size_, column = (x-kLeftMargin) / cell_size_;
+	sf::Vector2f real_coordinates = window.mapPixelToCoords(sf::Vector2i(x, y));
+	float row = (real_coordinates.y-kTopMargin) / cell_size_, column = (real_coordinates.x-kLeftMargin) / cell_size_;
 	return BoardIndex(int(column) + 'a', 8 - int(row));
 }
 void Game::Run()
@@ -222,7 +223,7 @@ void Game::Run()
 			if (event.type == sf::Event::Resized)
 			{
 				window.setSize(sf::Vector2u(event.size.width, event.size.width));
-				window.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
+				//window.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
 			}
 			if (event.type == sf::Event::KeyReleased)
 			{
@@ -323,9 +324,9 @@ void Game::drawBoard()
 	text_font.loadFromFile("times.ttf");
 	sf::Text board_coodinates("", text_font,25);
 	board_coodinates.setFillColor(sf::Color::Black);
-	sf::Vector2u window_size = window.getSize();
+	/*sf::Vector2u window_size = window.getSize();
 	unsigned int board_size = window_size.x - 2 * kTextMargin;
-	cell_size_ = board_size / 8.0;
+	cell_size_ = board_size / 8.0;*/
 	cell.setSize(sf::Vector2f(cell_size_, cell_size_));
 	for (int i = 0; i < 8; i++) //i - row
 		for (int j = 0; j < 8; j++) //j - column
@@ -371,24 +372,24 @@ void Game::drawBoard()
 		cell.setOutlineThickness(kThickness);
 		window.draw(cell);
 	}
-	cell.setSize(sf::Vector2f(board_size, board_size));
+	cell.setSize(sf::Vector2f(board_size_, board_size_));
 	cell.setPosition(getRealPosition({ 'a',8 }));
 	cell.setFillColor(sf::Color(0, 0, 0, 0));
 	cell.setOutlineColor(sf::Color::Black);
 	cell.setOutlineThickness(1.0);
 	window.draw(cell);
 	//cell.setFillColor(sf::Color::Green);
-	cell.setSize(sf::Vector2f(kRightMargin / 2, board_size / 2));
+	cell.setSize(sf::Vector2f(kRightMargin / 2, board_size_ / 2));
 	cell.setOutlineThickness(1.0);
 	if (white_turn_)
 	{
 		cell.setFillColor(sf::Color::White);
-		cell.setPosition(sf::Vector2f(kLeftMargin + board_size + (kLeftMargin - cell.getSize().x) / 2, kTopMargin + board_size / 2));
+		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + (kLeftMargin - cell.getSize().x) / 2, kTopMargin + board_size_ / 2));
 	}
 	else
 	{
 		cell.setFillColor(sf::Color::Black);
-		cell.setPosition(sf::Vector2f(kLeftMargin + board_size + (kLeftMargin - cell.getSize().x) / 2, kTopMargin));
+		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + (kLeftMargin - cell.getSize().x) / 2, kTopMargin));
 	}
 	window.draw(cell);
 }
@@ -412,11 +413,11 @@ void Game::drawWinState()
 {
 	sf::Font text_font;
 	text_font.loadFromFile("times.ttf");
-	float board_size = cell_size_ * 8;
+	//float board_size_ = cell_size_ * 8;
 	sf::Text win_text("", text_font, 100);
 	win_text.setPosition(sf::Vector2f(
-		kLeftMargin + (board_size / 2 - win_text.getGlobalBounds().width),
-		kTopMargin + (board_size / 2 - win_text.getGlobalBounds().height)));
+		kLeftMargin + (board_size_ / 2 - win_text.getGlobalBounds().width),
+		kTopMargin + (board_size_ / 2 - win_text.getGlobalBounds().height)));
 //	cout << win_text.getGlobalBounds().width << ' ' << win_text.getGlobalBounds().height << endl;
 	switch (game_state_)
 	{
@@ -425,16 +426,16 @@ void Game::drawWinState()
 		win_text.setOutlineThickness(1.0);
 		win_text.setOutlineColor(sf::Color::Black);
 		win_text.setPosition(sf::Vector2f(
-			kLeftMargin + (board_size - win_text.getGlobalBounds().width)/2,
-			kTopMargin + (board_size - win_text.getGlobalBounds().height)/2));
+			kLeftMargin + (board_size_ - win_text.getGlobalBounds().width)/2,
+			kTopMargin + (board_size_ - win_text.getGlobalBounds().height)/2));
 		window.draw(win_text);
 		break;
 	case BLACK_WINS:
 		win_text.setFillColor(sf::Color::Black);
 		win_text.setString("Black wins!");
 		win_text.setPosition(sf::Vector2f(
-			kLeftMargin + (board_size - win_text.getGlobalBounds().width)/2,
-			kTopMargin + (board_size - win_text.getGlobalBounds().height)/2));
+			kLeftMargin + (board_size_ - win_text.getGlobalBounds().width)/2,
+			kTopMargin + (board_size_ - win_text.getGlobalBounds().height)/2));
 		window.draw(win_text);
 		break;
 	}
