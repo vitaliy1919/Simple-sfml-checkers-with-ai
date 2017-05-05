@@ -52,7 +52,6 @@ void Game::changeTurn()
 	white_turn_ = !white_turn_;
 	std::swap(cur_player_, another_player_);
 	checkPiecesForBeating();
-	
 	drawPieces();
 }
 void Game::clearInfoForClickedPiece()

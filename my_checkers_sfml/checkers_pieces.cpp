@@ -155,6 +155,11 @@ pieces_iterator BoardIndex::checkForPieces(vector_pieces & pieces) const
 	return iter;
 }
 
+bool BoardIndex::checkForPiecesBool(const Board & board) const
+{
+	return board.getPiece(*this) != Board::EMPTY;
+}
+
 
 //void BoardIndex::checkForBeatingAndAddToPossibleMoves(const vector_pieces & pieces, vector<move_with_piece> possible_moves) const
 //{

@@ -12,6 +12,7 @@ using std::cout;
 
 class CheckersPiece;
 struct BoardIndex;
+struct Board;
 typedef vector<CheckersPiece> vector_pieces;
 typedef vector_pieces::iterator pieces_iterator;
 typedef vector_pieces::const_iterator const_pieces_iterator;
@@ -29,17 +30,30 @@ struct BoardIndex
 	inline bool isInBoard() const { return (column >= 'a' && column <= 'h') && (row >= 1 && row <= 8);}
 	pieces_iterator checkForPieces(vector_pieces& pieces) const;
 	bool checkForPiecesBool(vector_pieces& pieces) const { return checkForPieces(pieces) != pieces.end();  }
+	bool checkForPiecesBool(const Board& board) const;
 	//void checkForBeatingAndAddToPossibleMoves(const vector_pieces& pieces, vector<move_with_piece> possible_moves) const;
 };
 inline bool isInBoard(const BoardIndex& to_check) { return to_check.isInBoard(); }
-
 ostream& operator<<(ostream& os, const BoardIndex& to_show);
 istream& operator>>(istream& is, BoardIndex& to_input);
-
 pieces_iterator checkForPieces(const BoardIndex& position, vector_pieces& pieces);
-
 inline bool operator==(const BoardIndex& a, const BoardIndex& b) { return (a.column == b.column) && (a.row == b.row); }
 inline bool operator!=(const BoardIndex& a, const BoardIndex& b) { return !(a == b); }
+
+struct Board
+{
+	enum
+	{
+		EMPTY,
+		WHITE_PIECE,
+		BLACK_PIECE,
+		WHITE_KING,
+		BLACK_KING
+	};
+	int checkers_map[8][8] = {};
+	int getPiece(const BoardIndex& position) const { return checkers_map[position.row - 1][position.column - 'a'];}
+	int& getPiece(const BoardIndex& position) { return checkers_map[position.row - 1][position.column - 'a']; }
+};
 class CheckersPiece
 {
 private:
