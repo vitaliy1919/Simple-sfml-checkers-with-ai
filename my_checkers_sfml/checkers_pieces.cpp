@@ -5,7 +5,7 @@
 
 void CheckersPiece::addPossibleMoveBeat(
 	BoardIndex(BoardIndex::*pf)() const,
-	vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board,
+	list_pieces& player_pieces, list_pieces& opponent_pieces, Board& board,
 	vector<move_with_piece>& possible_moves) const
 {
 	BoardIndex position_to_check = (position_.*pf)();
@@ -42,7 +42,7 @@ void CheckersPiece::addPossibleMoveBeat(
 		}
 	}
 }
-vector<move_with_piece> CheckersPiece::possibleBeatMoves(vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board) const
+vector<move_with_piece> CheckersPiece::possibleBeatMoves(list_pieces& player_pieces, list_pieces& opponent_pieces, Board& board) const
 {
 	vector<move_with_piece> possible_moves;
 	addPossibleMoveBeat(&BoardIndex::upperLeft, player_pieces, opponent_pieces, board, possible_moves);
@@ -52,7 +52,7 @@ vector<move_with_piece> CheckersPiece::possibleBeatMoves(vector_pieces& player_p
 	return possible_moves;
 }
 void CheckersPiece::addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
-	vector_pieces& player_pieces, vector_pieces& opponent_pieces, Board& board,
+	list_pieces& player_pieces, list_pieces& opponent_pieces, Board& board,
 	vector<BoardIndex>& possible_moves) const
 {
 	BoardIndex position_to_check = (position_.*pf)();
@@ -74,7 +74,7 @@ void CheckersPiece::addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
 		}
 	}
 }
-vector<BoardIndex> CheckersPiece::possibleMoves( vector_pieces& player_pieces, vector_pieces& opponent_pieces,Board &board) const
+vector<BoardIndex> CheckersPiece::possibleMoves( list_pieces& player_pieces, list_pieces& opponent_pieces,Board &board) const
 {
 	vector<BoardIndex> possible_moves;
 	if (!is_king_)
@@ -141,7 +141,7 @@ istream & operator >> (istream & is, BoardIndex & to_input)
 	return is;
 }
 
-pieces_iterator checkForPieces(const BoardIndex& position,vector_pieces& pieces)
+pieces_iterator checkForPieces(const BoardIndex& position,list_pieces& pieces)
 {
 	return position.checkForPieces(pieces);
 }
@@ -158,7 +158,7 @@ istream & operator >> (istream & is, CheckersPiece & piece_to_input)
 	return is;
 }
 
-pieces_iterator BoardIndex::checkForPieces(vector_pieces & pieces) const
+pieces_iterator BoardIndex::checkForPieces(list_pieces & pieces) const
 {
 	pieces_iterator iter = pieces.begin();
 	while (iter != pieces.end() && iter->getPosition() != *this)
@@ -184,7 +184,7 @@ bool BoardIndex::checkForPiecesBool(const Board & board) const
 }
 
 
-//void BoardIndex::checkForBeatingAndAddToPossibleMoves(const vector_pieces & pieces, vector<move_with_piece> possible_moves) const
+//void BoardIndex::checkForBeatingAndAddToPossibleMoves(const list_pieces & pieces, vector<move_with_piece> possible_moves) const
 //{
 //	BoardIndex position_to_check = this->upperRight();
 //

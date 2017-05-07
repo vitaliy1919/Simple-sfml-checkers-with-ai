@@ -1,7 +1,7 @@
 #include "Game.h"
 #include <algorithm>
 #include <sstream>
-void Game::drawPlayersPieces(const vector_pieces player, const sf::Texture& piece_texture,const sf::Texture& piece_king_texture)
+void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece_texture,const sf::Texture& piece_king_texture)
 {
 	sf::Sprite piece;
 	piece.setScale(sf::Vector2f(cell_size_ / (1.2*piece_texture.getSize().x), cell_size_ / (1.2* piece_texture.getSize().y)));
@@ -30,8 +30,9 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			white_player_[iter].setPosition({ i,j });
-			white_player_[iter].setColor(CheckersPiece::WHITE);
+			white_player_.push_back({ BoardIndex(i,j) });
+			/*white_player_[iter].setPosition({ i,j });
+			white_player_[iter].setColor(CheckersPiece::WHITE);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::WHITE_PIECE);
 			iter++;
 		}
@@ -42,8 +43,9 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			black_player_[iter].setPosition({ i,j });
-			black_player_[iter].setColor(CheckersPiece::BLACK);
+			black_player_.push_back({ BoardIndex(i,j),CheckersPiece::BLACK});
+			/*black_player_[iter].setPosition({ i,j });
+			black_player_[iter].setColor(CheckersPiece::BLACK);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::BLACK_PIECE);
 			iter++;
 		}
@@ -54,10 +56,12 @@ void Game::changeTurn()
 	white_turn_ = !white_turn_;
 	std::swap(cur_player_, another_player_);
 	checkPiecesForBeating();
-	drawPieces();
+	//drawPieces();
 }
 void Game::clearInfoForClickedPiece()
 {
+	is_piece_clicked_ = false;
+	piece_firstly_clicked_ = nullptr;
 	hightlighted_cells_.clear();
 	possible_beat_moves_.clear();
 	possible_moves_.clear();
@@ -124,7 +128,6 @@ void Game::movePiece(const BoardIndex & click_position)
 	{
 		clearInfoForClickedPiece();
 		appendVector(hightlighted_cells_, pieces_that_can_beat_);
-		is_piece_clicked_ = false;
 	}
 	if (!possible_beat_moves_.empty())
 	{
@@ -166,7 +169,6 @@ void Game::movePiece(const BoardIndex & click_position)
 		clearInfoForClickedPiece();
 		checkForWin();
 		changeTurn();
-		is_piece_clicked_ = false;
 	}
 }
 void Game::checkForWin()
@@ -457,7 +459,7 @@ void Game::drawWinState()
 	
 }
 
-bool Game::checkPlayerHasMove(const vector_pieces & player)
+bool Game::checkPlayerHasMove(const list_pieces & player)
 {
 	const_pieces_iterator iter = player.begin();
 	bool cur_has_move = true;
