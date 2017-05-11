@@ -25,7 +25,7 @@ class Ai
 private:
 	//std::list<move> all_moves_;
 	Board board_;
-	enum {WHITE_PLAYER,BLACK_PLAYER};
+	
 
 	int ai_color_;
 	list_pieces white_player_;
@@ -39,5 +39,17 @@ private:
 	int evaluatePosition();
 	pair<int,move> alphaBeta(int color, int depth, int maxWhite, int maxBlack);
 public: 
+	enum { WHITE_PLAYER, BLACK_PLAYER };
+	Ai(const list_pieces& white, const list_pieces& black, const Board& b, int color) :
+		white_player_(white), 
+		black_player_(black), 
+		ai_color_(color) ,
+		board_(b){}
+	void update(const list_pieces& white, const list_pieces& black, const Board& b)
+	{
+		white_player_ = white;
+		black_player_ = black;
+		board_ = b;
+	}
 	pair<int, move> findBestMove(int depth);
 };
