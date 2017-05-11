@@ -1,6 +1,8 @@
 #pragma once
 #include "checkers_pieces.h"
 #include <fstream>
+#include <algorithm>
+#include <sstream>
 // useful operation on vectors and lists
 template <typename T>
 inline void appendVector(vector<T>& dest, const vector<T>& source)
@@ -143,15 +145,16 @@ public:
 		video_mode = video_mode.getDesktopMode(); 
 
 		//and use it to make game playable on different screen resolution
-		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);
+		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);// window_size = 900 * 0.8;;
 		board_size_ = window_size;
 		cell_size_ = board_size_ / 8;
 		kTopMargin = kLeftMargin = kBottomMargin = 0.042*board_size_;
 		kTurnRectangleWidth = 0.03*board_size_;
 		kTurnRectangleMargin = 0.015 * board_size_;
-		kRightMargin = 2 * kTurnRectangleMargin + kTurnRectangleWidth;
-		//kRightMargin = 0.8 * board_size_;
+		//kRightMargin = 2 * kTurnRectangleMargin + kTurnRectangleWidth;
+		kRightMargin = 0.4 * board_size_;
 		window.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers");
+		//window.setView(sf::View(sf::FloatRect(0, 0, window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin)));
 
 		//set window on the middle of a screen
 		window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
@@ -163,7 +166,7 @@ public:
 	void setWhiteTurn();
 	void setBlackTurn();
 
-	// save to file (s button) current position 
+	// save to file (s button) current position
 	// and load from file (r button) functions
 	// used file "position.check", but you can change it
 	// doesn't work correctly now

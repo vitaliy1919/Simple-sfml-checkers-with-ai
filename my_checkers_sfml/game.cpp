@@ -1,7 +1,6 @@
 #include "Game.h"
-#include <algorithm>
-#include <sstream>
-void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece_texture,const sf::Texture& piece_king_texture)
+
+void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece_texture, const sf::Texture& piece_king_texture)
 {
 	sf::Sprite piece;
 	piece.setScale(sf::Vector2f(cell_size_ / (1.2*piece_texture.getSize().x), cell_size_ / (1.2* piece_texture.getSize().y)));
@@ -21,7 +20,9 @@ void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece
 }
 sf::Vector2f Game::getRealPosition(const BoardIndex & position) const
 {
-	return sf::Vector2f((position.column - 'a')*cell_size_+kLeftMargin,(8 - position.row)*cell_size_+kTopMargin);
+	return sf::Vector2f(
+		(position.column - 'a')*cell_size_+kLeftMargin,
+		(8 - position.row)*cell_size_+kTopMargin);
 }
 void Game::playersInit()
 {
@@ -31,7 +32,7 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			white_player_.push_back({ BoardIndex(i,j) });
+			white_player_.push_back({ BoardIndex(i, j) });
 			/*white_player_[iter].setPosition({ i,j });
 			white_player_[iter].setColor(CheckersPiece::WHITE);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::WHITE_PIECE);
@@ -44,7 +45,7 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			black_player_.push_back({ BoardIndex(i,j),CheckersPiece::BLACK});
+			black_player_.push_back({ BoardIndex(i, j), CheckersPiece::BLACK });
 			/*black_player_[iter].setPosition({ i,j });
 			black_player_[iter].setColor(CheckersPiece::BLACK);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::BLACK_PIECE);
@@ -57,7 +58,7 @@ void Game::changeTurn()
 	white_turn_ = !white_turn_;
 	std::swap(cur_player_, another_player_);
 	checkPiecesForBeating();
-	//drawPieces();
+	// drawPieces();
 }
 void Game::clearInfoForClickedPiece()
 {
@@ -80,7 +81,7 @@ void Game::processMouseClick(const BoardIndex click_position)
 			last_moves_of_cur_player_.push_back(click_position);
 			if (must_beat_)
 			{
-				// check whether piece_on_position can beat 
+				// check whether piece_on_position can beat
 				pieces_iterator piece_which_beat_iter = std::find(
 					pieces_that_can_beat_.begin(),
 					pieces_that_can_beat_.end(),
@@ -89,7 +90,7 @@ void Game::processMouseClick(const BoardIndex click_position)
 				{
 					// if clicked on right piece - fill info about it
 					is_piece_clicked_ = true;
-					possible_beat_moves_ = piece_on_position->possibleBeatMoves(*cur_player_, *another_player_,board_);
+					possible_beat_moves_ = piece_on_position->possibleBeatMoves(*cur_player_, *another_player_, board_);
 					piece_firstly_clicked_ = &(*piece_on_position);
 					// clear hightlighted_cells_ (which stores pieces_that_can beat previously
 					// and add new info
@@ -105,7 +106,7 @@ void Game::processMouseClick(const BoardIndex click_position)
 				piece_firstly_clicked_ = &(*piece_on_position);
 				possible_moves_ = piece_on_position->possibleMoves(*cur_player_, *another_player_, board_);
 				hightlighted_cells_.push_back(piece_on_position->getPosition());
-				hightlighted_cells_.insert(hightlighted_cells_.end(), possible_moves_.begin(), possible_moves_.end());
+				appendVector(hightlighted_cells_, possible_moves_);
 			}
 		}
 	}
@@ -154,8 +155,7 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 
 		if (i < possible_beat_moves_.size())
 		{
-			last_moves_of_cur_player_.push_back(click_position);
-			
+			last_moves_of_cur_player_.push_back(click_position);			
 			board_.getPiece(piece_firstly_clicked_->getPosition()) = static_cast<int>(CheckersType::EMPTY);
 
 			piece_firstly_clicked_->setPosition(click_position);
@@ -166,7 +166,7 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 			board_.getPiece(click_position) = piece_firstly_clicked_->getCheckersType();
 
 			piece_firstly_clicked_->transformIntoKingIfPossible();
-			//transformIntoKings();
+
 			possible_beat_moves_ = piece_firstly_clicked_->possibleBeatMoves(*cur_player_, *another_player_,board_);
 			if (!possible_beat_moves_.empty())
 			{
@@ -200,7 +200,6 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 	}
 	if (move_done)
 	{
-		
 		last_moves_to_show.clear();
 		appendVector(last_moves_to_show, last_moves_of_cur_player_);
 		clearInfoForClickedPiece();
@@ -264,7 +263,8 @@ void Game::Run()
 		while (window.pollEvent(event))
 		{
 			// "close requested" event: we close the window
-			if (event.type == sf::Event::Closed)
+			if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) || 
+				event.type == sf::Event::Closed)
 				window.close();
 			if (event.type == sf::Event::Resized)
 			{
@@ -378,9 +378,11 @@ void Game::drawBoard()
 	text_font.loadFromFile("times.ttf");
 	sf::Text board_coodinates("", text_font,25);
 	board_coodinates.setFillColor(sf::Color::Black);
+
 	/*sf::Vector2u window_size = window.getSize();
 	unsigned int board_size = window_size.x - 2 * kTextMargin;
 	cell_size_ = board_size / 8.0;*/
+
 	cell.setSize(sf::Vector2f(cell_size_, cell_size_));
 	for (int i = 0; i < 8; i++) //i - row
 		for (int j = 0; j < 8; j++) //j - column
@@ -416,16 +418,6 @@ void Game::drawBoard()
 		}
 	const float kThickness = 5.0;
 	cell.setSize(sf::Vector2f(cell_size_ - kThickness*2, cell_size_ - kThickness*2));
-	for (auto x : hightlighted_cells_)
-	{
-		
-		sf::Vector2f cell_position = getRealPosition(x);
-		cell.setPosition(sf::Vector2f(cell_position.x+kThickness,cell_position.y+kThickness));
-		cell.setFillColor(sf::Color(0, 0, 0, 0));
-		cell.setOutlineColor(sf::Color(255, 193, 7, 255));
-		cell.setOutlineThickness(kThickness);
-		window.draw(cell);
-	}
 	for (auto x : last_moves_to_show)
 	{
 
@@ -436,6 +428,18 @@ void Game::drawBoard()
 		cell.setOutlineThickness(kThickness);
 		window.draw(cell);
 	}
+
+	for (auto x : hightlighted_cells_)
+	{
+		
+		sf::Vector2f cell_position = getRealPosition(x);
+		cell.setPosition(sf::Vector2f(cell_position.x+kThickness,cell_position.y+kThickness));
+		cell.setFillColor(sf::Color(0, 0, 0, 0));
+		cell.setOutlineColor(sf::Color(255, 193, 7, 255));
+		cell.setOutlineThickness(kThickness);
+		window.draw(cell);
+	}
+	
 
 	// draw square around the corner of board to make it prettier
 	cell.setSize(sf::Vector2f(board_size_, board_size_));
@@ -461,6 +465,75 @@ void Game::drawBoard()
 		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + kTurnRectangleMargin, kTopMargin));
 	}
 	window.draw(cell);
+
+	float left_beaten_position =
+		kLeftMargin + board_size_ +
+		2 * kTurnRectangleMargin + kTurnRectangleWidth;
+	const int kNumberPiecesInARow = 3;
+	float diametr_beaten_piece = (kRightMargin - 3 * kTurnRectangleMargin - kTurnRectangleWidth) / kNumberPiecesInARow;
+
+	board_coodinates.setString("Beaten pieces:");
+	board_coodinates.setPosition(sf::Vector2f(
+		left_beaten_position + (kRightMargin - kTurnRectangleMargin*2- kTurnRectangleWidth - board_coodinates.getGlobalBounds().width)/2, 0));
+	window.draw(board_coodinates);
+	sf::Texture white_piece, black_piece;
+	white_piece.loadFromFile("white_man.png");
+	black_piece.loadFromFile("black_man.png");
+	white_piece.setSmooth(true);
+	black_piece.setSmooth(true);
+	
+
+	sf::RectangleShape not_beaten_piece(sf::Vector2f(diametr_beaten_piece,diametr_beaten_piece));
+	sf::Sprite beaten_piece_black(black_piece), beaten_piece_white(white_piece);
+	beaten_piece_black.setScale(
+		diametr_beaten_piece / black_piece.getSize().x,
+		diametr_beaten_piece / black_piece.getSize().y);
+	beaten_piece_white.setScale(
+		diametr_beaten_piece / white_piece.getSize().x,
+		diametr_beaten_piece / white_piece.getSize().y);
+
+	not_beaten_piece.setOutlineThickness(1.0);
+	not_beaten_piece.setOutlineColor(sf::Color(0,0,0,60));
+	not_beaten_piece.setFillColor(sf::Color(0, 0, 0, 0));
+
+	int number_beaten_pieces_black = 12 - black_player_.size(),
+		number_beaten_pieces_white = 12 - white_player_.size();
+
+	for (int i = 0; i < 12; i++)
+	{
+		int row = i / kNumberPiecesInARow,
+			column = i % kNumberPiecesInARow;
+
+		if (i < number_beaten_pieces_black)
+		{
+			beaten_piece_black.setPosition(sf::Vector2f(
+				left_beaten_position + column*diametr_beaten_piece,
+				kTopMargin + row*diametr_beaten_piece));
+			window.draw(beaten_piece_black);
+		}
+		else
+		{
+			not_beaten_piece.setPosition(sf::Vector2f(
+				left_beaten_position + column*diametr_beaten_piece,
+				kTopMargin + row*diametr_beaten_piece));
+			window.draw(not_beaten_piece);
+		}
+
+		if (i < number_beaten_pieces_white)
+		{
+			beaten_piece_white.setPosition(sf::Vector2f(
+				left_beaten_position + column*diametr_beaten_piece,
+				kTopMargin + board_size_/2+row*diametr_beaten_piece));
+			window.draw(beaten_piece_white);
+		}
+		else
+		{
+			not_beaten_piece.setPosition(sf::Vector2f(
+				left_beaten_position + column*diametr_beaten_piece,
+				kTopMargin + board_size_ / 2 + row*diametr_beaten_piece));
+			window.draw(not_beaten_piece);
+		}
+	}
 }
 
 void Game::drawPieces()
