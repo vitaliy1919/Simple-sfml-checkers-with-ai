@@ -11,6 +11,7 @@ void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece
 			piece.setTexture(piece_king_texture);
 		else
 			piece.setTexture(piece_texture);
+		piece.setColor(sf::Color::White);
 		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
 		piece_position.x += cell_size_ / 2 - piece.getGlobalBounds().height / 2;
 		piece_position.y += cell_size_ / 2 - piece.getGlobalBounds().width / 2;
@@ -69,24 +70,28 @@ void Game::clearInfoForClickedPiece()
 void Game::processMouseClick(const BoardIndex click_position)
 {
 	if (is_piece_clicked_)
-		movePiece(click_position);
+		moveClickedPiece(click_position);
 	else
 	{
 		pieces_iterator piece_on_position = click_position.checkForPieces(*cur_player_);
 		if (piece_on_position != cur_player_->end())
 		{
-
+			last_moves_of_cur_player_.push_back(click_position);
 			if (must_beat_)
 			{
-				pieces_iterator piece_which_beat = std::find(
+				// check whether piece_on_position can beat 
+				pieces_iterator piece_which_beat_iter = std::find(
 					pieces_that_can_beat_.begin(),
 					pieces_that_can_beat_.end(),
 					*piece_on_position);
-				if (piece_which_beat != pieces_that_can_beat_.end())
+				if (piece_which_beat_iter != pieces_that_can_beat_.end())
 				{
+					// if clicked on right piece - fill info about it
 					is_piece_clicked_ = true;
 					possible_beat_moves_ = piece_on_position->possibleBeatMoves(*cur_player_, *another_player_,board_);
 					piece_firstly_clicked_ = &(*piece_on_position);
+					// clear hightlighted_cells_ (which stores pieces_that_can beat previously
+					// and add new info
 					hightlighted_cells_.clear();
 					hightlighted_cells_.push_back(piece_on_position->getPosition());
 					for (auto x : possible_beat_moves_)
@@ -120,53 +125,84 @@ void Game::buildPossibleMoves(CheckersPiece& clicked_piece)
 			hightlighted_cells_.push_back(x);
 	}
 }
-void Game::movePiece(const BoardIndex & click_position)
+void Game::moveClickedPiece(const BoardIndex & click_position)
 {
 	bool move_done = false;
 	pieces_iterator clicked_piece_player_iter = click_position.checkForPieces(*cur_player_);
-	if (clicked_piece_player_iter != cur_player_->end() && *clicked_piece_player_iter == *piece_firstly_clicked_)
+
+	if (!can_beat_many_times_ && clicked_piece_player_iter != cur_player_->end())
 	{
+		// if we clicked on piece, not on posible move
+		// should clear info about current clicked piece and choose new
+		// we don't won't do anything if our piece is in the middle of move
+		// (can_beat_many_times_ == true)
+		CheckersPiece *previously_clicked_piece = piece_firstly_clicked_;
 		clearInfoForClickedPiece();
-		appendVector(hightlighted_cells_, pieces_that_can_beat_);
+		appendVector(hightlighted_cells_, pieces_that_can_beat_); 
+		// if we clicked on other piece - make move for it
+		if (*clicked_piece_player_iter != *previously_clicked_piece)
+			processMouseClick(click_position);
 	}
+
 	if (!possible_beat_moves_.empty())
 	{
+		// check wheter click position is in possible beat moves
 		int i = 0;
 		while (i < possible_beat_moves_.size() && possible_beat_moves_[i].first != click_position)
 			++i;
+
 		if (i < possible_beat_moves_.size())
 		{
+			last_moves_of_cur_player_.push_back(click_position);
+			
 			board_.getPiece(piece_firstly_clicked_->getPosition()) = static_cast<int>(CheckersType::EMPTY);
+
 			piece_firstly_clicked_->setPosition(click_position);
+			
 			board_.getPiece(possible_beat_moves_[i].second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
 			another_player_->erase(possible_beat_moves_[i].second);
+
 			board_.getPiece(click_position) = piece_firstly_clicked_->getCheckersType();
-			transformIntoKings();
+
+			piece_firstly_clicked_->transformIntoKingIfPossible();
+			//transformIntoKings();
 			possible_beat_moves_ = piece_firstly_clicked_->possibleBeatMoves(*cur_player_, *another_player_,board_);
 			if (!possible_beat_moves_.empty())
 			{
+				can_beat_many_times_ = true;
 				hightlighted_cells_.clear();
 				for (auto x : possible_beat_moves_)
 					hightlighted_cells_.push_back(x.first);
 			}
 			else
+			{
+				can_beat_many_times_ = false;
 				move_done = true;
+			}
 		}
 	}
 	else
 	{
 		if (std::find(possible_moves_.begin(), possible_moves_.end(), click_position) != possible_moves_.end())
 		{
+			last_moves_of_cur_player_.push_back(click_position);
+
 			board_.getPiece(piece_firstly_clicked_->getPosition()) = static_cast<int>(CheckersType::EMPTY);
 			piece_firstly_clicked_->setPosition(click_position);
+
 			board_.getPiece(click_position) = piece_firstly_clicked_->getCheckersType();
-			transformIntoKings();
+			
+			piece_firstly_clicked_->transformIntoKingIfPossible();
+			//transformIntoKings();
 			move_done = true;
 		}
 	}
 	if (move_done)
 	{
 		clearInfoForClickedPiece();
+		last_moves_to_show.clear();
+		appendVector(last_moves_to_show, last_moves_of_cur_player_);
+		last_moves_of_cur_player_.clear();
 		checkForWin();
 		changeTurn();
 	}
@@ -385,7 +421,17 @@ void Game::drawBoard()
 		sf::Vector2f cell_position = getRealPosition(x);
 		cell.setPosition(sf::Vector2f(cell_position.x+kThickness,cell_position.y+kThickness));
 		cell.setFillColor(sf::Color(0, 0, 0, 0));
-		cell.setOutlineColor(sf::Color::Yellow);
+		cell.setOutlineColor(sf::Color(255, 193, 7, 255));
+		cell.setOutlineThickness(kThickness);
+		window.draw(cell);
+	}
+	for (auto x : last_moves_to_show)
+	{
+
+		sf::Vector2f cell_position = getRealPosition(x);
+		cell.setPosition(sf::Vector2f(cell_position.x + kThickness, cell_position.y + kThickness));
+		cell.setFillColor(sf::Color(0, 0, 0, 0));
+		cell.setOutlineColor(sf::Color(118, 255, 3, 255));
 		cell.setOutlineThickness(kThickness);
 		window.draw(cell);
 	}
@@ -414,10 +460,14 @@ void Game::drawBoard()
 void Game::drawPieces()
 {
 	sf::Texture white_piece, black_piece,white_piece_king,black_piece_king;
-	white_piece.loadFromFile("white_piece.png");
+	/*white_piece.loadFromFile("white_piece.png");
 	white_piece_king.loadFromFile("white_piece_king.png");
 	black_piece.loadFromFile("black_piece.png");
-	black_piece_king.loadFromFile("black_piece_king.png");
+	black_piece_king.loadFromFile("black_piece_king.png");*/
+	white_piece.loadFromFile("white_man.png");
+	white_piece_king.loadFromFile("white_queen.png");
+	black_piece.loadFromFile("black_man.png");
+	black_piece_king.loadFromFile("black_queen.png");
 	white_piece.setSmooth(true);
 	white_piece_king.setSmooth(true);
 	black_piece.setSmooth(true);

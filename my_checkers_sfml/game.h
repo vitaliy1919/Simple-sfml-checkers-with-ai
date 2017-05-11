@@ -38,11 +38,18 @@ private:
 	vector<move_with_piece> possible_beat_moves_;
 	vector<BoardIndex> possible_moves_;
 
+	//last moves to show on screen
+	vector<BoardIndex> last_moves_to_show;
+
+	//last moves of player 
+	vector<BoardIndex> last_moves_of_cur_player_;
+
 	// on each move we check whether at least one piece of current player can beat 
 	// (because if so player must beat)
 	// and store result of our check in must_beat_
 	// pieces_that_can_beat_ contains all pieces which can beat
 	bool must_beat_;
+	bool can_beat_many_times_;
 	list_pieces pieces_that_can_beat_;
 
 	// if we click on piece we store this in is_piece_clicked_
@@ -98,7 +105,7 @@ private:
 	void buildPossibleMoves(CheckersPiece& clicked_piece);
 
 	// move clicked piece to BoardIndex if possible 
-	void movePiece(const BoardIndex& click_position);
+	void moveClickedPiece(const BoardIndex& click_position);
 
 	// checks for win and saves result to game_state_
 	void checkForWin();
@@ -126,16 +133,20 @@ public:
 		another_player_(&black_player_),
 		pieces_that_can_beat_(),
 		must_beat_(false),
-		game_state_(NOT_ENDED)
+		game_state_(NOT_ENDED),
+		can_beat_many_times_(false)
 	{
 		sf::VideoMode video_mode;
-		// get display resoulition
+
+		// get display resolution
 		video_mode = video_mode.getDesktopMode(); 
+
 		//and use it to make game playable on different screen resolution
 		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);
 		board_size_ = window_size;
 		cell_size_ = board_size_ / 8;
 		window.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers");
+
 		//set window on the middle of a screen
 		window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 	}
