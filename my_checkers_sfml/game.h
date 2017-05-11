@@ -19,12 +19,13 @@ class Game
 {
 private:
 	//margins of out board
-	static const int kTextMargin = 30;
-	static const int kTopMargin = kTextMargin;
-	static const int kLeftMargin = kTextMargin;
-	static const int kRightMargin = kTextMargin;
-	static const int kBottomMargin = kTextMargin;
-
+	double kTextMargin = 30;
+	double kTopMargin = kTextMargin;
+	double kLeftMargin = kTextMargin;
+	double kRightMargin = kTextMargin;
+	double kBottomMargin = kTextMargin;
+	double kTurnRectangleWidth = 30;
+	double kTurnRectangleMargin = 10;
 	list_pieces white_player_;
 	list_pieces black_player_;
 	Board board_;
@@ -145,6 +146,11 @@ public:
 		unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);
 		board_size_ = window_size;
 		cell_size_ = board_size_ / 8;
+		kTopMargin = kLeftMargin = kBottomMargin = 0.042*board_size_;
+		kTurnRectangleWidth = 0.03*board_size_;
+		kTurnRectangleMargin = 0.015 * board_size_;
+		kRightMargin = 2 * kTurnRectangleMargin + kTurnRectangleWidth;
+		//kRightMargin = 0.8 * board_size_;
 		window.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers");
 
 		//set window on the middle of a screen

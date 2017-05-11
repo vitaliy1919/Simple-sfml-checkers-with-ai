@@ -63,6 +63,7 @@ void Game::clearInfoForClickedPiece()
 {
 	is_piece_clicked_ = false;
 	piece_firstly_clicked_ = nullptr;
+	last_moves_of_cur_player_.clear();
 	hightlighted_cells_.clear();
 	possible_beat_moves_.clear();
 	possible_moves_.clear();
@@ -199,10 +200,10 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 	}
 	if (move_done)
 	{
-		clearInfoForClickedPiece();
+		
 		last_moves_to_show.clear();
 		appendVector(last_moves_to_show, last_moves_of_cur_player_);
-		last_moves_of_cur_player_.clear();
+		clearInfoForClickedPiece();
 		checkForWin();
 		changeTurn();
 	}
@@ -267,7 +268,7 @@ void Game::Run()
 				window.close();
 			if (event.type == sf::Event::Resized)
 			{
-				window.setSize(sf::Vector2u(event.size.width, event.size.width));
+				//window.setSize(sf::Vector2u(event.size.width, event.size.height));
 				//window.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
 			}
 			if (event.type == sf::Event::KeyReleased)
@@ -435,24 +436,29 @@ void Game::drawBoard()
 		cell.setOutlineThickness(kThickness);
 		window.draw(cell);
 	}
+
+	// draw square around the corner of board to make it prettier
 	cell.setSize(sf::Vector2f(board_size_, board_size_));
-	cell.setPosition(getRealPosition({ 'a',8 }));
+	cell.setPosition(getRealPosition(BoardIndex( 'a',8 )));
 	cell.setFillColor(sf::Color(0, 0, 0, 0));
 	cell.setOutlineColor(sf::Color::Black);
 	cell.setOutlineThickness(1.0);
 	window.draw(cell);
+
 	//cell.setFillColor(sf::Color::Green);
-	cell.setSize(sf::Vector2f(kRightMargin / 2, board_size_ / 2));
+
+	// draw current turn rectange (white color for white
+	cell.setSize(sf::Vector2f(kTurnRectangleWidth, board_size_ / 2));
 	cell.setOutlineThickness(1.0);
 	if (white_turn_)
 	{
 		cell.setFillColor(sf::Color::White);
-		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + (kLeftMargin - cell.getSize().x) / 2, kTopMargin + board_size_ / 2));
+		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + kTurnRectangleMargin, kTopMargin + board_size_ / 2));
 	}
 	else
 	{
 		cell.setFillColor(sf::Color::Black);
-		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + (kLeftMargin - cell.getSize().x) / 2, kTopMargin));
+		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + kTurnRectangleMargin, kTopMargin));
 	}
 	window.draw(cell);
 }
