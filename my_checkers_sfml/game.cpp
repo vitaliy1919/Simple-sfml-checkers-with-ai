@@ -416,7 +416,7 @@ void Game::drawBoard()
 				window.draw(board_coodinates);
 			}
 		}
-	const float kThickness = 5.0;
+	float kThickness = 0.08*cell_size_;
 	cell.setSize(sf::Vector2f(cell_size_ - kThickness*2, cell_size_ - kThickness*2));
 	for (auto x : last_moves_to_show)
 	{
@@ -441,7 +441,7 @@ void Game::drawBoard()
 	}
 	
 
-	// draw square around the corner of board to make it prettier
+	// draw square around the corner of board_ to make it prettier
 	cell.setSize(sf::Vector2f(board_size_, board_size_));
 	cell.setPosition(getRealPosition(BoardIndex( 'a',8 )));
 	cell.setFillColor(sf::Color(0, 0, 0, 0));

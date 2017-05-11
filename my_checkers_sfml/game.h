@@ -20,7 +20,7 @@ inline void appendVector(vector<BoardIndex>& dest, const list_pieces& source)
 class Game
 {
 private:
-	//margins of out board
+	//margins of out board_
 	double kTextMargin = 30;
 	double kTopMargin = kTextMargin;
 	double kLeftMargin = kTextMargin;
@@ -35,7 +35,7 @@ private:
 	list_pieces *cur_player_;
 	list_pieces *another_player_;
 	
-	// hightlighted_cells_ are cells which be highlighted with yellow on board
+	// hightlighted_cells_ are cells which be highlighted with yellow on board_
 	// possible_beat_moves_ and possible_moves_ store possible moves for clicked piece
 	vector<BoardIndex> hightlighted_cells_;
 	vector<move_with_piece> possible_beat_moves_;
@@ -65,7 +65,7 @@ private:
 	float board_size_;
 	sf::RenderWindow window;
 	
-	// this function return real position on board by BoardIndex 
+	// this function return real position on board_ by BoardIndex 
 	sf::Vector2f getRealPosition(const BoardIndex& position) const;
 
 	// this function returns BoardIndex by real position
@@ -82,7 +82,7 @@ private:
 	void drawPieces();
 	void drawWinState();
 
-	// set initial state of board
+	// set initial state of board_
 	void playersInit();
 
 	// check current player pieces whether at least one of them can beat
@@ -117,7 +117,7 @@ private:
 	// used in checkForWin
 	bool checkPlayerHasMove(const list_pieces& player);
 
-	// clears board state, doesn't work properly now
+	// clears board_ state, doesn't work properly now
 	// used for save and load game positions
 	void clearAllStates();
 public:

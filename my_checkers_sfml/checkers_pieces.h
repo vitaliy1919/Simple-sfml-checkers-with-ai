@@ -24,7 +24,7 @@ typedef list_pieces::iterator pieces_iterator;
 typedef list_pieces::const_iterator const_pieces_iterator;
 typedef pair<BoardIndex, pieces_iterator> move_with_piece;
 
-//this struct represents index of our checkers board
+//this struct represents index of our checkers board_
 struct BoardIndex
 {
 	char	column;	//from 'a' to 'h'
@@ -35,7 +35,7 @@ struct BoardIndex
 	BoardIndex bottomLeft() const { return BoardIndex(column - 1, row - 1); }
 	BoardIndex bottomRight() const {return BoardIndex(column + 1, row - 1);}
 
-	//checks whether position is in board
+	//checks whether position is in board_
 	inline bool isInBoard() const { return (column >= 'a' && column <= 'h') && (row >= 1 && row <= 8);}
 
 	//return itetaror to piece (in pieces) on position, if there is no piece, return pieces.end()
@@ -56,8 +56,8 @@ pieces_iterator checkForPieces(const BoardIndex& position, list_pieces& pieces);
 inline bool operator==(const BoardIndex& a, const BoardIndex& b) { return (a.column == b.column) && (a.row == b.row); }
 inline bool operator!=(const BoardIndex& a, const BoardIndex& b) { return !(a == b); }
 
-//simply names of our checkers, which are used when we represent board as massive 8x8
-//so it used only for board struct and everything conected with it
+//simply names of our checkers, which are used when we represent board_ as massive 8x8
+//so it used only for board_ struct and everything conected with it
 enum class CheckersType:int
 {
 	EMPTY = 0,
@@ -71,12 +71,12 @@ struct Board
 	
 	int checkers_map[8][8] = {};
 
-	//get board piece (as represented in CheckersType) for given BoardIndex
+	//get board_ piece (as represented in CheckersType) for given BoardIndex
 	int getPiece(const BoardIndex& position) const { return checkers_map[8 - position.row][position.column - 'a'];}
 	int& getPiece(const BoardIndex& position) { return checkers_map[8 - position.row][position.column - 'a']; }
 };
 
-// this class describes CheckersPiece, that have its own posion on board, color (white or black)
+// this class describes CheckersPiece, that have its own posion on board_, color (white or black)
 // and can be king
 class CheckersPiece
 {
@@ -88,8 +88,8 @@ private:
 	// add posible beat position for CheckersPiece in one given direction (pf pointer)
 	// directions are declared in BoardIndex and are upperLeft, upperRight, bottomLeft, bottomRight
 	// for this function we need only position of player pieces and opponent pieces,
-	// but board is used for improving performance: checkForPieces without board take at maximum around 12 operations
-	// with board - only 1
+	// but board_ is used for improving performance: checkForPieces without board_ take at maximum around 12 operations
+	// with board_ - only 1
 	// resulting moves are stored in possible_moves and in which we store both position of move and piece which we beat on this move
 	// this information we be used to delete pieces when making moves
 
