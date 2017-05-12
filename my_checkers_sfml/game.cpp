@@ -1,5 +1,9 @@
-#include "Game.h"
+// This is a personal academic project. Dear PVS-Studio, please check it.
 
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
+#include "Game.h"
+#include <ctime>
 void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece_texture, const sf::Texture& piece_king_texture)
 {
 	sf::Sprite piece;
@@ -69,7 +73,7 @@ void Game::clearInfoForClickedPiece()
 	possible_beat_moves_.clear();
 	possible_moves_.clear();
 }
-void Game::processMouseClick(const BoardIndex click_position)
+void Game::processMouseClick(const BoardIndex& click_position)
 {
 	if (is_piece_clicked_)
 		moveClickedPiece(click_position);
@@ -259,6 +263,34 @@ void Game::Run()
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
 		
+		if (!game_ended && !white_turn_ == is_black_ai_)
+		{
+			time_t start_time = clock(), start_time_move = start_time;
+			black_ai_.update(white_player_, black_player_, board_);
+			cout << "Time lapsed update: " << (clock() - start_time) / ((double)CLOCKS_PER_SEC) << endl;
+			start_time = clock();
+
+			move best_move_with_score = black_ai_.findBestMove(5);
+
+			cout << "Time lapsed ai: " << (clock() - start_time) / ((double)CLOCKS_PER_SEC) << endl;
+			//system("pause");
+			start_time = clock();
+			move best_move = best_move_with_score;
+			auto iter = best_move.start_position.checkForPieces(black_player_);
+			std::swap(board_.getPiece(best_move.start_position), board_.getPiece(best_move.end_position));
+			iter->setPosition(best_move.end_position);
+			cout << "Time lapsed different: " << (clock() - start_time) / ((double)CLOCKS_PER_SEC) << endl;
+			if (best_move.beat_move)
+			{
+				auto iter_beat = std::find(white_player_.begin(), white_player_.end(), best_move.beaten_piece);
+				board_.getPiece(iter_beat->getPosition()) = static_cast<int>(CheckersType::EMPTY);
+				white_player_.erase(iter_beat);
+			}
+			last_moves_to_show.clear();
+			last_moves_to_show.push_back(best_move.start_position);
+			last_moves_to_show.push_back(best_move.end_position);
+			changeTurn();
+		}
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -311,9 +343,11 @@ void Game::Run()
 			cout << (game_state_ == WHITE_WINS ? "White wins!\n" : "Black wins\n") << endl;
 			game_ended = true;
 		}
+		time_t start_time = clock();
 		drawBoard();
 		drawPieces();
 		drawWinState();
+		cout << "Time lapsed draw: " << (clock() - start_time) / ((double)CLOCKS_PER_SEC) << endl;
 		// end the current frame
 		window.display();
 	}

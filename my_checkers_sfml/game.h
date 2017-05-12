@@ -1,5 +1,6 @@
 #pragma once
 #include "checkers_pieces.h"
+#include "ai.h"
 #include <fstream>
 #include <algorithm>
 #include <sstream>
@@ -37,6 +38,7 @@ private:
 
 	bool is_white_ai_;
 	bool is_black_ai_;
+	Ai black_ai_;
 	
 	// hightlighted_cells_ are cells which be highlighted with yellow on board_
 	// possible_beat_moves_ and possible_moves_ store possible moves for clicked piece
@@ -104,7 +106,7 @@ private:
 	void clearInfoForClickedPiece();
 
 	// process mouse click
-	void processMouseClick(const BoardIndex click_position);
+	void processMouseClick(const BoardIndex& click_position);
 
 	// build all possible position for given CheckersPiece
 	// if piece can beat, possible_moves_ will be empty
@@ -162,7 +164,8 @@ public:
 		//set window on the middle of a screen
 		window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 
-		is_black_ai_;
+		is_black_ai_ = true;
+		black_ai_ = Ai(white_player_, black_player_, board_, Ai::BLACK_PLAYER);
 	}
 	
 	void Run();
