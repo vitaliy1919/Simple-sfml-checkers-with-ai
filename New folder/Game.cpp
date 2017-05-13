@@ -226,23 +226,6 @@ void Game::checkForWin()
 	else
 		game_state_ = NOT_ENDED;
 }
-void Game::makeMove(const move & move_to_make)
-{
-	/*auto iter_move_to_make = best_move_for_ai.start_position.checkForPieces(black_player_);
-	if (best_move_for_ai.iter_piece_to_beat == -1)
-		ai_choosen_piece->setPosition(best_move_for_ai.end_position);
-	else
-	{
-		vector<move_with_piece> possible_beat_for_ai_piece = ai_choosen_piece->possibleBeatMoves(*cur_player_, *another_player_, board_);
-		auto piece_to_beat = findInVector(possible_beat_for_ai_piece, best_move_for_ai.end_position);
-		board_.getPiece(piece_to_beat->second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
-		another_player_->erase(piece_to_beat->second);
-		ai_choosen_piece->setPosition(best_move_for_ai.end_position);
-	}
-	std::swap(
-		board_.getPiece(best_move_for_ai.start_position),
-		board_.getPiece(best_move_for_ai.end_position));*/
-}
 void Game::checkPiecesForBeating()
 {
 	pieces_that_can_beat_.clear();
@@ -284,34 +267,34 @@ void Game::Run()
 		
 		if (!game_ended && !white_turn_ == is_black_ai_)
 		{
-			checkPiecesForBeating();
-			bool flag = false;
-			do
+			//time_t start_time = clock(), start_time_move = start_time;
+			black_ai_.update(white_player_, black_player_, board_);
+			//cout << "Time lapsed update: " << (clock() - start_time) / ((double)CLOCKS_PER_SEC) << endl;
+			//start_time = clock();
+
+			move best_move_for_ai = black_ai_.findBestMove(7);
+
+			//cout << "Time lapsed ai: " << (clock() - start_time) / ((double)CLOCKS_PER_SEC) << endl;
+			//system("pause");
+			//start_time = clock();
+			auto ai_choosen_piece = best_move_for_ai.start_position.checkForPieces(black_player_);
+			if (best_move_for_ai.iter_piece_to_beat == -1)
+				ai_choosen_piece->setPosition(best_move_for_ai.end_position);
+			else
 			{
-					black_ai_.update(white_player_, black_player_, board_);
-
-					move best_move_for_ai = black_ai_.findBestMove(2);
-
-					auto ai_choosen_piece = best_move_for_ai.start_position.checkForPieces(black_player_);
-					if (best_move_for_ai.iter_piece_to_beat == -1)
-						ai_choosen_piece->setPosition(best_move_for_ai.end_position);
-					else
-					{
-						vector<move_with_piece> possible_beat_for_ai_piece = ai_choosen_piece->possibleBeatMoves(*cur_player_, *another_player_, board_);
-						auto piece_to_beat = findInVector(possible_beat_for_ai_piece, best_move_for_ai.end_position);
-						board_.getPiece(piece_to_beat->second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
-						another_player_->erase(piece_to_beat->second);
-						ai_choosen_piece->setPosition(best_move_for_ai.end_position);
-					}
-					std::swap(
-						board_.getPiece(best_move_for_ai.start_position),
-						board_.getPiece(best_move_for_ai.end_position));
-
-					last_moves_to_show.clear();
-					last_moves_to_show.push_back(best_move_for_ai.start_position);
-					last_moves_to_show.push_back(best_move_for_ai.end_position);
-					checkPiecesForBeating();
-			}while (flag && must_beat_);
+				vector<move_with_piece> possible_beat_for_ai_piece = ai_choosen_piece->possibleBeatMoves(*cur_player_,*another_player_,board_);
+				auto piece_to_beat = findInVector(possible_beat_for_ai_piece, best_move_for_ai.end_position);
+				board_.getPiece(piece_to_beat->second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
+				another_player_->erase(piece_to_beat->second);
+				ai_choosen_piece->setPosition(best_move_for_ai.end_position);
+			}
+			std::swap(
+				board_.getPiece(best_move_for_ai.start_position),
+				board_.getPiece(best_move_for_ai.end_position));
+			
+			last_moves_to_show.clear();
+			last_moves_to_show.push_back(best_move_for_ai.start_position);
+			last_moves_to_show.push_back(best_move_for_ai.end_position);
 			changeTurn();
 		}
 		sf::Event event;

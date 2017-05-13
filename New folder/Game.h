@@ -129,7 +129,6 @@ private:
 	// checks for win and saves result to game_state_
 	void checkForWin();
 
-	void makeMove(const move& move_to_make);
 	// checks wthether given player has at least on move
 	// used in checkForWin
 	bool checkPlayerHasMove(const list_pieces& player);

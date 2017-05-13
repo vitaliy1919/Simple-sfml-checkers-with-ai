@@ -148,7 +148,7 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 	{
 		makeMove(player, *cur_move);
 		CheckersPiece moven_piece = cur_player[cur_move->iter_piece_to_move].piece;
-		if (cur_move->iter_piece_to_beat!= -1 && !getPossibleBeatMoves(moven_piece).empty())
+		if (!getPossibleBeatMoves(moven_piece).empty())
 			opponent_player = player;
 		int opponent_result = -alphaBeta(opponent_player, depth - 1, max_ai, min_player);
 		unmakeMove(player, *cur_move);
@@ -159,16 +159,16 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 				score = opponent_result;
 				best_move = *cur_move;
 			}
-			if (score > max_ai)
+			/*if (score > max_ai)
 			{
 				max_ai = score;
 				best_move = *cur_move;
 			}
-			if (max_ai < score)
+			if (max_ai <= score)
 			{
 				best_move_for_ai_ = best_move;
 				return max_ai;
-			}
+			}*/
 		}
 		else
 		{
@@ -177,10 +177,10 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 				score = opponent_result;
 				//best_move_for_ai_ = *cur_move;
 			}
-			if (score < min_player)
+			/*if (score < min_player)
 				min_player = score;
-			if (score > min_player)
-				return min_player;
+			if (score >= min_player)
+				return min_player;*/
 		}
 		++cur_move;
 	}
@@ -338,7 +338,7 @@ move Ai::findBestMove(int depth)
 	int best_score = alphaBeta(ai_player_,depth);
 	time_t end_time = clock();
 	float time_lapsed = (end_time - start_time) / ((float)CLOCKS_PER_SEC);
-	cout << "Time lapsed " <<"(depth = "<<depth<<"): "<< time_lapsed << endl;
+	cout << "Time lapsed: " << time_lapsed << endl;
 	cout << "Nodes created: " << number_nodes_ << endl;
 	return best_move_for_ai_;
 }
