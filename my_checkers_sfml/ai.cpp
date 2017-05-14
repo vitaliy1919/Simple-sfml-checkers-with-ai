@@ -172,6 +172,10 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 		{
 			iter_piece_beat_multiple_ = -1;
 			opponent_result = alphaBeta(opponent_player, depth - 1, max_ai, min_player);
+			/*if (all_moves.size() != 1)
+				opponent_result = alphaBeta(opponent_player, depth - 1, max_ai, min_player);
+			else
+				opponent_result = alphaBeta(opponent_player, depth, max_ai, min_player);*/
 		}
 		unmakeMove(player, *cur_move);
 		if (ai_player_ == player)

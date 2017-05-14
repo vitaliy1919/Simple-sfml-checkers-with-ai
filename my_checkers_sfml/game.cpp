@@ -281,7 +281,7 @@ void Game::Run()
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
 		
-		int depth = 7;
+		int depth = 10;
 		if (!game_ended && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
 		{
 			if (!white_turn_ && is_black_ai_)
@@ -710,8 +710,8 @@ Game::Game() :
 	//set window on the middle of a screen
 	window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 
-	is_black_ai_ = true;
-	is_white_ai_ = false;
+	is_black_ai_ = false;
+	is_white_ai_ = true;
 	black_ai_ = Ai(white_player_, black_player_, board_, Ai::BLACK_PLAYER);
 	white_ai_ = Ai(white_player_, black_player_, board_, Ai::WHITE_PLAYER);
 }
