@@ -50,6 +50,7 @@ private:
 	bool is_white_ai_;
 	bool is_black_ai_;
 	Ai black_ai_;
+	Ai white_ai_;
 	
 	// hightlighted_cells_ are cells which be highlighted with yellow on board_
 	// possible_beat_moves_ and possible_moves_ store possible moves for clicked piece

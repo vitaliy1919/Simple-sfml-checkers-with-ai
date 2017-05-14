@@ -228,20 +228,19 @@ void Game::checkForWin()
 }
 void Game::makeMove(const move & move_to_make)
 {
-	/*auto iter_move_to_make = best_move_for_ai.start_position.checkForPieces(black_player_);
-	if (best_move_for_ai.iter_piece_to_beat == -1)
-		ai_choosen_piece->setPosition(best_move_for_ai.end_position);
+	auto piece_to_move = move_to_make.start_position.checkForPieces(*cur_player_);
+	if (move_to_make.iter_piece_to_beat == -1)
+		piece_to_move->setPosition(move_to_make.end_position);
 	else
 	{
-		vector<move_with_piece> possible_beat_for_ai_piece = ai_choosen_piece->possibleBeatMoves(*cur_player_, *another_player_, board_);
-		auto piece_to_beat = findInVector(possible_beat_for_ai_piece, best_move_for_ai.end_position);
-		board_.getPiece(piece_to_beat->second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
+		vector<move_with_piece> possible_beat_moves_for_piece = piece_to_move->possibleBeatMoves(*cur_player_, *another_player_, board_);
+		auto piece_to_beat = findInVector(possible_beat_moves_for_piece, move_to_make.end_position);
+		board_.emptyCell(piece_to_beat->second->getPosition());
 		another_player_->erase(piece_to_beat->second);
-		ai_choosen_piece->setPosition(best_move_for_ai.end_position);
+		piece_to_move->setPosition(move_to_make.end_position);
 	}
-	std::swap(
-		board_.getPiece(best_move_for_ai.start_position),
-		board_.getPiece(best_move_for_ai.end_position));*/
+	piece_to_move->transformIntoKingIfPossible();
+	board_.movePiece(move_to_make.start_position, move_to_make.end_position);
 }
 void Game::checkPiecesForBeating()
 {
@@ -282,36 +281,28 @@ void Game::Run()
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
 		
-		if (!game_ended && !white_turn_ == is_black_ai_)
+		if (!game_ended && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
 		{
-			checkPiecesForBeating();
-			bool flag = false;
-			do
+			if (!white_turn_ && is_black_ai_)
+				black_ai_.update(white_player_, black_player_, board_);
+			else
+				white_ai_.update(5white_player_, black_player_, board_);
+
+			std::list<move> best_moves_for_ai;
+			if (!white_turn_ && is_black_ai_)
+				best_moves_for_ai = black_ai_.findBestMove(5);
+			else
+				best_moves_for_ai = white_ai_.findBestMove(6);
+
+			last_moves_to_show.clear();
+			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move!=best_moves_for_ai.end();++cur_best_move)
 			{
-					black_ai_.update(white_player_, black_player_, board_);
-
-					move best_move_for_ai = black_ai_.findBestMove(2);
-
-					auto ai_choosen_piece = best_move_for_ai.start_position.checkForPieces(black_player_);
-					if (best_move_for_ai.iter_piece_to_beat == -1)
-						ai_choosen_piece->setPosition(best_move_for_ai.end_position);
-					else
-					{
-						vector<move_with_piece> possible_beat_for_ai_piece = ai_choosen_piece->possibleBeatMoves(*cur_player_, *another_player_, board_);
-						auto piece_to_beat = findInVector(possible_beat_for_ai_piece, best_move_for_ai.end_position);
-						board_.getPiece(piece_to_beat->second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
-						another_player_->erase(piece_to_beat->second);
-						ai_choosen_piece->setPosition(best_move_for_ai.end_position);
-					}
-					std::swap(
-						board_.getPiece(best_move_for_ai.start_position),
-						board_.getPiece(best_move_for_ai.end_position));
-
-					last_moves_to_show.clear();
-					last_moves_to_show.push_back(best_move_for_ai.start_position);
-					last_moves_to_show.push_back(best_move_for_ai.end_position);
-					checkPiecesForBeating();
-			}while (flag && must_beat_);
+				makeMove(*cur_best_move);
+				last_moves_to_show.push_back(cur_best_move->start_position);
+				if (std::next(cur_best_move, 1) == best_moves_for_ai.end())
+					last_moves_to_show.push_back(cur_best_move->end_position);
+			}
+			checkForWin();
 			changeTurn();
 		}
 		sf::Event event;
@@ -709,6 +700,8 @@ Game::Game() :
 	//set window on the middle of a screen
 	window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 
-	is_black_ai_ = true;
+	is_black_ai_ = false;
+	is_white_ai_ = true;
 	black_ai_ = Ai(white_player_, black_player_, board_, Ai::BLACK_PLAYER);
+	white_ai_ = Ai(white_player_, black_player_, board_, Ai::WHITE_PLAYER);
 }

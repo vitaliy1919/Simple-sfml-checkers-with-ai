@@ -41,7 +41,10 @@ private:
 	move best_move_for_ai_;
 
 	int number_nodes_;
-	//int start_depth_;
+	
+	// iter to piece that can beat multiple times
+	// if ther is no piece - iter_piece_beat_multiple_ == -1
+	int iter_piece_beat_multiple_;
 	
 	std::list<move> generateAllMoves(int player);
 
@@ -77,7 +80,7 @@ private:
 public: 
 	enum { WHITE_PLAYER, BLACK_PLAYER };
 	Ai(const list_pieces& white = list_pieces(), const list_pieces& black = list_pieces(), const Board& b = Board(), int color = 0) :
-		ai_player_(color) ,
+		ai_player_(color) ,iter_piece_beat_multiple_(-1),
 		board_(b)
 	{
 		fromListToArray(white, white_player_, white_player_size_);
@@ -89,5 +92,5 @@ public:
 		fromListToArray(black, black_player_, black_player_size_);
 		board_ = b;
 	}
-	move findBestMove(int depth);
+	std::list<move> findBestMove(int depth);
 };
