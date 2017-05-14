@@ -91,6 +91,8 @@ private:
 	enum {NOT_ENDED,WHITE_WINS,BLACK_WINS};
 	int game_state_;
 
+	int game_mode_;
+	int ai_depth_;
 	// function used for drawing
 	// drawPlayersPieces draws pieces for one of players
 	// drawWinState draws big text with winner, when game ended
@@ -140,7 +142,8 @@ private:
 	// used for save and load game positions
 	void clearAllStates();
 public:
-	Game();
+	enum { TWO_PLAYERS, BLACK_AI, WHITE_AI, TWO_AI };
+	Game(int game_mode = BLACK_AI, int game_level = 5);
 	
 	void Run();
 	list_pieces getWhitePlayer() const { return white_player_; }

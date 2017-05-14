@@ -6,7 +6,7 @@
 
 int main()
 {
-	Game checkers;
+	Game checkers(Game::BLACK_AI, 7);
 	checkers.Run();
 	return 0;
 }

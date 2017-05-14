@@ -281,7 +281,6 @@ void Game::Run()
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
 		
-		int depth = 10;
 		if (!game_ended && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
 		{
 			if (!white_turn_ && is_black_ai_)
@@ -291,9 +290,9 @@ void Game::Run()
 
 			std::list<move> best_moves_for_ai;
 			if (!white_turn_ && is_black_ai_)
-				best_moves_for_ai = black_ai_.findBestMove(depth);
+				best_moves_for_ai = black_ai_.findBestMove(ai_depth_);
 			else
-				best_moves_for_ai = white_ai_.findBestMove(depth);
+				best_moves_for_ai = white_ai_.findBestMove(ai_depth_);
 
 			last_moves_to_show.clear();
 			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move!=best_moves_for_ai.end();++cur_best_move)
@@ -672,7 +671,7 @@ void Game::clearAllStates()
 	clearInfoForClickedPiece();
 }
 
-Game::Game() :
+Game::Game(int game_mode, int ai_level) :
 	white_player_(),
 	black_player_(),
 	white_turn_(true),
@@ -688,7 +687,8 @@ Game::Game() :
 	pieces_that_can_beat_(),
 	must_beat_(false),
 	game_state_(NOT_ENDED),
-	can_beat_many_times_(false)
+	can_beat_many_times_(false),
+	ai_depth_(ai_level)
 {
 	sf::VideoMode video_mode;
 
@@ -711,7 +711,12 @@ Game::Game() :
 	window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
 
 	is_black_ai_ = false;
-	is_white_ai_ = true;
+	is_white_ai_ = false;
+
+	if (game_mode == WHITE_AI || game_mode == TWO_AI)
+		is_white_ai_ = true;
+	if (game_mode == BLACK_AI || game_mode == TWO_AI)
+		is_black_ai_ = true;
 	black_ai_ = Ai(white_player_, black_player_, board_, Ai::BLACK_PLAYER);
 	white_ai_ = Ai(white_player_, black_player_, board_, Ai::WHITE_PLAYER);
 }
