@@ -98,6 +98,7 @@ private:
 	void drawBoard();
 	void drawPieces();
 	void drawWinState();
+	void redrawPosition();
 
 	// set initial state of board_
 	void playersInit();

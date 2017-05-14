@@ -363,9 +363,13 @@ std::list<move> Ai::findBestMove(int depth)
 	bool can_beat_multiple = false;
 	do
 	{
-		int best_score = alphaBeta(ai_player_, depth);
-		result_moves.push_back(best_move_for_ai_);
+		std::list<move> cur_position_moves = generateAllMoves(ai_player_);
+		if (cur_position_moves.size() != 1)
+			alphaBeta(ai_player_, depth);
+		else
+			best_move_for_ai_ = cur_position_moves.front();
 		makeMove(ai_player_,best_move_for_ai_);
+		result_moves.push_back(best_move_for_ai_);
 		CheckersPiece piece_to_check_for_multiple_beat = cur_player[best_move_for_ai_.iter_piece_to_move].piece;
 		if (best_move_for_ai_.iter_piece_to_beat != -1 &&
 			!getPossibleBeatMoves(piece_to_check_for_multiple_beat).empty())
