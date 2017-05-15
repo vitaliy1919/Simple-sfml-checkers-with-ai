@@ -40,6 +40,8 @@ private:
 	double kBottomMargin = kTextMargin;
 	double kTurnRectangleWidth = 30;
 	double kTurnRectangleMargin = 10;
+
+
 	list_pieces white_player_;
 	list_pieces black_player_;
 	Board board_;
@@ -102,9 +104,15 @@ private:
 	void drawWinState();
 	void redrawPosition();
 
+	sf::Texture white_piece_texture_;
+	sf::Texture black_piece_texture_;
+	sf::Texture white_king_texture_;
+	sf::Texture black_king_texture_;
+	sf::Font text_font_;
+
 	// set initial state of board_
 	void playersInit();
-
+	void resoursesInit();
 	// check current player pieces whether at least one of them can beat
 	// if so, fill must_beat_ and pieces_that_can_beat_
 	void checkPiecesForBeating();

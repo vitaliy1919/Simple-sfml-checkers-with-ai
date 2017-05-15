@@ -69,6 +69,22 @@ void Game::playersInit()
 		}
 	}
 }
+void Game::resoursesInit()
+{
+	text_font_.loadFromFile("PT_Serif-Web-Regular.ttf");
+
+	white_piece_texture_.loadFromFile("white_man.png");
+	white_king_texture_.loadFromFile("white_queen.png");
+
+	black_piece_texture_.loadFromFile("black_man.png");
+	black_king_texture_.loadFromFile("black_queen.png");
+
+	white_piece_texture_.setSmooth(true);
+	white_king_texture_.setSmooth(true);
+
+	black_piece_texture_.setSmooth(true);
+	black_king_texture_.setSmooth(true);
+}
 void Game::changeTurn()
 {
 	white_turn_ = !white_turn_;
@@ -437,14 +453,14 @@ void Game::saveToFile(std::string file_name)
 void Game::drawBoard()
 {
 	sf::RectangleShape cell;
-	sf::Font text_font;
-	text_font.loadFromFile("times.ttf");
-	sf::Text board_coodinates("", text_font,25);
-	board_coodinates.setFillColor(sf::Color::Black);
+	
+	sf::Text board_coordinates("abcdefgh", text_font_,25);
+	board_coordinates.setFillColor(sf::Color::Black);
+	board_coordinates.setPosition(0, 0);
 
-	/*sf::Vector2u window_size = window.getSize();
-	unsigned int board_size = window_size.x - 2 * kTextMargin;
-	cell_size_ = board_size / 8.0;*/
+	sf::FloatRect bounds_for_calculations = board_coordinates.getGlobalBounds();
+	float text_top_position = (kTopMargin - bounds_for_calculations.height) / 2 - bounds_for_calculations.top;
+	board_coordinates.setScale(sf::Vector2f(kTopMargin / (1.2 * bounds_for_calculations.height), kTopMargin /(1.2 * bounds_for_calculations.height)));
 
 	cell.setSize(sf::Vector2f(cell_size_, cell_size_));
 	for (int i = 0; i < 8; i++) //i - row
@@ -465,18 +481,20 @@ void Game::drawBoard()
 			{
 				//coord = 'a' + i;
 				coord += std::to_string(8-i);
-				board_coodinates.setString(coord);
-				board_coodinates.setPosition((kLeftMargin - board_coodinates.getGlobalBounds().width)/2,
-					cell_size_*(i+0.5)-board_coodinates.getCharacterSize()/2+kTopMargin);
-				window.draw(board_coodinates);
+				board_coordinates.setString(coord);
+				board_coordinates.setPosition((kLeftMargin - board_coordinates.getGlobalBounds().width)/2,
+					cell_size_*(i+0.5)-board_coordinates.getCharacterSize()/2+kTopMargin);
+				window.draw(board_coordinates);
 			}
 			if (i == 0)
 			{
 				coord = 'a' + j;
-				board_coodinates.setString(coord);
-				board_coodinates.setPosition(sf::Vector2f(cell_size_*(j + 0.5) - board_coodinates.getCharacterSize()/2+kLeftMargin, 
-					0));
-				window.draw(board_coodinates);
+				board_coordinates.setString(coord);
+				board_coordinates.setPosition(sf::Vector2f(cell_size_*(j + 0.5) - board_coordinates.getGlobalBounds().width/2+kLeftMargin, 0));
+				board_coordinates.move(sf::Vector2f(
+					0, 
+					text_top_position));
+				window.draw(board_coordinates);
 			}
 		}
 	float kThickness = 0.08*cell_size_;
@@ -535,25 +553,19 @@ void Game::drawBoard()
 	const int kNumberPiecesInARow = 3;
 	float diametr_beaten_piece = (kRightMargin - 3 * kTurnRectangleMargin - kTurnRectangleWidth) / kNumberPiecesInARow;
 
-	board_coodinates.setString("Beaten pieces:");
-	board_coodinates.setPosition(sf::Vector2f(
-		left_beaten_position + (kRightMargin - kTurnRectangleMargin*2- kTurnRectangleWidth - board_coodinates.getGlobalBounds().width)/2, 0));
-	window.draw(board_coodinates);
-	sf::Texture white_piece, black_piece;
-	white_piece.loadFromFile("white_man.png");
-	black_piece.loadFromFile("black_man.png");
-	white_piece.setSmooth(true);
-	black_piece.setSmooth(true);
-	
+	board_coordinates.setString("Beaten pieces:");
+	board_coordinates.setPosition(sf::Vector2f(
+		left_beaten_position + (kRightMargin - kTurnRectangleMargin*2- kTurnRectangleWidth - board_coordinates.getGlobalBounds().width)/2, text_top_position));
+	window.draw(board_coordinates);
 
 	sf::RectangleShape not_beaten_piece(sf::Vector2f(diametr_beaten_piece,diametr_beaten_piece));
-	sf::Sprite beaten_piece_black(black_piece), beaten_piece_white(white_piece);
+	sf::Sprite beaten_piece_black(black_piece_texture_), beaten_piece_white(white_piece_texture_);
 	beaten_piece_black.setScale(
-		diametr_beaten_piece / black_piece.getSize().x,
-		diametr_beaten_piece / black_piece.getSize().y);
+		diametr_beaten_piece / black_piece_texture_.getSize().x,
+		diametr_beaten_piece / black_piece_texture_.getSize().y);
 	beaten_piece_white.setScale(
-		diametr_beaten_piece / white_piece.getSize().x,
-		diametr_beaten_piece / white_piece.getSize().y);
+		diametr_beaten_piece / white_piece_texture_.getSize().x,
+		diametr_beaten_piece / white_piece_texture_.getSize().y);
 
 	not_beaten_piece.setOutlineThickness(1.0);
 	not_beaten_piece.setOutlineColor(sf::Color(0,0,0,60));
@@ -601,33 +613,16 @@ void Game::drawBoard()
 
 void Game::drawPieces()
 {
-	sf::Texture white_piece, black_piece,white_piece_king,black_piece_king;
-	/*white_piece.loadFromFile("white_piece.png");
-	white_piece_king.loadFromFile("white_piece_king.png");
-	black_piece.loadFromFile("black_piece.png");
-	black_piece_king.loadFromFile("black_piece_king.png");*/
-	white_piece.loadFromFile("white_man.png");
-	white_piece_king.loadFromFile("white_queen.png");
-	black_piece.loadFromFile("black_man.png");
-	black_piece_king.loadFromFile("black_queen.png");
-	white_piece.setSmooth(true);
-	white_piece_king.setSmooth(true);
-	black_piece.setSmooth(true);
-	black_piece_king.setSmooth(true);
-	drawPlayersPieces(white_player_, white_piece,white_piece_king);
-	drawPlayersPieces(black_player_, black_piece,black_piece_king);
+	drawPlayersPieces(white_player_, white_piece_texture_,white_king_texture_);
+	drawPlayersPieces(black_player_, black_piece_texture_,black_king_texture_);
 }
 
 void Game::drawWinState()
 {
-	sf::Font text_font;
-	text_font.loadFromFile("times.ttf");
-	//float board_size_ = cell_size_ * 8;
-	sf::Text win_text("", text_font, 100);
+	sf::Text win_text("", text_font_, 100);
 	win_text.setPosition(sf::Vector2f(
 		kLeftMargin + (board_size_ / 2 - win_text.getGlobalBounds().width),
 		kTopMargin + (board_size_ / 2 - win_text.getGlobalBounds().height)));
-//	cout << win_text.getGlobalBounds().width << ' ' << win_text.getGlobalBounds().height << endl;
 	switch (game_state_)
 	{
 	case WHITE_WINS:
@@ -725,6 +720,8 @@ Game::Game(int game_mode, int ai_level) :
 
 	//set window on the middle of a screen
 	window.setPosition(sf::Vector2i((video_mode.width - window.getSize().x) / 2, 0));
+
+	resoursesInit();
 
 	is_black_ai_ = false;
 	is_white_ai_ = false;
