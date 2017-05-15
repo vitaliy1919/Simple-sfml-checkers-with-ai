@@ -7,18 +7,30 @@
 void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece_texture, const sf::Texture& piece_king_texture)
 {
 	sf::Sprite piece;
-	piece.setScale(sf::Vector2f(cell_size_ / (1.2*piece_texture.getSize().x), cell_size_ / (1.2* piece_texture.getSize().y)));
 	for (auto players_piece : player)
 	{
 		if (players_piece.isKing())
-			piece.setTexture(piece_king_texture);
+		{
+			piece.setTexture(piece_king_texture,true);
+			piece.setScale(sf::Vector2f(
+				cell_size_ / (1.2*piece_king_texture.getSize().x), 
+				cell_size_ / (1.2* piece_king_texture.getSize().y)));
+
+		}
 		else
-			piece.setTexture(piece_texture);
+		{
+			piece.setTexture(piece_texture,true);
+			piece.setScale(sf::Vector2f(
+				cell_size_ / (1.2*piece_texture.getSize().x), 
+				cell_size_ / (1.2* piece_texture.getSize().y)));
+		}
 		piece.setColor(sf::Color::White);
 		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
-		piece_position.x += cell_size_ / 2 - piece.getGlobalBounds().height / 2;
-		piece_position.y += cell_size_ / 2 - piece.getGlobalBounds().width / 2;
+		sf::FloatRect piece_bounds = piece.getGlobalBounds();
 		piece.setPosition(piece_position);
+		piece.move(sf::Vector2f(
+			(cell_size_ - piece_bounds.width) / 2,
+			(cell_size_ - piece_bounds.height) / 2));
 		window.draw(piece);
 	}
 }
@@ -295,15 +307,19 @@ void Game::Run()
 				best_moves_for_ai = white_ai_.findBestMove(ai_depth_);
 
 			last_moves_to_show.clear();
+			sf::Clock clock;
+			sf::Time timer = clock.getElapsedTime();
+
+			//while (clock.getElapsedTime() - timer < sf::milliseconds(500));
 			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move!=best_moves_for_ai.end();++cur_best_move)
 			{
 				
 				last_moves_to_show.push_back(cur_best_move->start_position);
 				makeMove(*cur_best_move);
 				redrawPosition();
-				sf::Clock clock;
-				sf::Time timer = clock.getElapsedTime();
-				while (clock.getElapsedTime() - timer < sf::milliseconds(500));
+				clock.restart();
+				if (best_moves_for_ai.size() != 1)
+					while (clock.getElapsedTime() - timer < sf::milliseconds(500));
 				if (std::next(cur_best_move, 1) == best_moves_for_ai.end())
 					last_moves_to_show.push_back(cur_best_move->end_position);
 			}

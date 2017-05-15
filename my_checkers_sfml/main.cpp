@@ -6,7 +6,9 @@
 
 int main()
 {
-	Game checkers(Game::BLACK_AI, 7);
+	int depth = 9;
+	//std::cin >> depth;
+	Game checkers(Game::TWO_PLAYERS, depth);
 	checkers.Run();
 	return 0;
 }
