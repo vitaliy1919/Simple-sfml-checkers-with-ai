@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include <sstream>
+#include <TGUI/TGUI.hpp>
 // useful operation on vectors and lists
 template <typename T>
 inline void appendVector(vector<T>& dest, const vector<T>& source)
@@ -82,7 +83,10 @@ private:
 
 	float cell_size_;
 	float board_size_;
-	sf::RenderWindow window;
+	sf::RenderWindow window_;
+	tgui::Gui window_for_widgets_;
+	vector<std::string> strings_for_menu_;
+	tgui::MenuBar::Ptr main_menu_;
 	
 	// this function return real position on board_ by BoardIndex 
 	sf::Vector2f getRealPosition(const BoardIndex& position) const;
@@ -110,9 +114,10 @@ private:
 	sf::Texture black_king_texture_;
 	sf::Font text_font_;
 
-	// set initial state of board_
+	// set initial state of board_ and resourses
 	void playersInit();
 	void resoursesInit();
+	void widgetsInit();
 	// check current player pieces whether at least one of them can beat
 	// if so, fill must_beat_ and pieces_that_can_beat_
 	void checkPiecesForBeating();
