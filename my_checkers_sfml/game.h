@@ -115,7 +115,6 @@ private:
 	sf::Font text_font_;
 
 	// set initial state of board_ and resourses
-	void playersInit();
 	void resoursesInit();
 	void widgetsInit();
 	// check current player pieces whether at least one of them can beat
@@ -157,7 +156,8 @@ private:
 public:
 	enum { TWO_PLAYERS, BLACK_AI, WHITE_AI, TWO_AI };
 	Game(int game_mode = BLACK_AI, int game_level = 5);
-	
+	void playersInit();
+
 	void Run();
 	list_pieces getWhitePlayer() const { return white_player_; }
 	list_pieces getBlackPlayer() const { return black_player_; }

@@ -91,6 +91,8 @@ int main()
 	wwindow.add(move_but);
 	cout << "View: " << window.getView().getSize().x << ' ' << window.getView().getSize().y << endl;	
 	cout << "Window: " << window.getSize().x << ' ' << window.getSize().y << endl;
+	Game game;
+	game.playersInit();
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -105,6 +107,7 @@ int main()
 		window.clear(sf::Color(255, 228, 170, 255));
 		app.drawStaticElements(turn, {BoardIndex('a',1)}, {BoardIndex('a', 3)},5,4);
 		app.setWidgetsPosition(main_menu_, unmove_but, move_but);
+		app.drawPieces(game.getWhitePlayer(), game.getBlackPlayer());
 		wwindow.draw();
 		window.display();
 	}

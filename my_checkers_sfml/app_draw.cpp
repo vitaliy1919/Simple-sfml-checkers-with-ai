@@ -75,6 +75,52 @@ void DrawAppInstance::drawTurn( bool white_turn)
 	window_->draw(turn_rectangle);
 }
 
+void DrawAppInstance::drawPlayersPieces(const list_pieces & player)
+{
+	sf::Sprite piece;
+	const sf::Texture *piece_texture, *piece_king_texture;
+	if (player.empty())
+		return;
+	int color = player.front().getColor();
+	if (color == CheckersPiece::WHITE)
+	{
+		piece_texture = &white_piece_texture_;
+		piece_king_texture = &white_king_texture_;
+	}
+	else
+	{
+		piece_texture = &black_piece_texture_;
+		piece_king_texture = &black_king_texture_;
+	}
+	for (auto players_piece : player)
+	{
+		if (players_piece.isKing())
+		{
+			piece.setTexture(*piece_king_texture, true);
+			piece.setScale(sf::Vector2f(
+				cell_size_ / (1.2*piece_king_texture->getSize().x),
+				cell_size_ / (1.2* piece_king_texture->getSize().y)));
+
+		}
+		else
+		{
+			piece.setTexture(*piece_texture, true);
+			piece.setScale(sf::Vector2f(
+				cell_size_ / (1.2*piece_texture->getSize().x),
+				cell_size_ / (1.2* piece_texture->getSize().y)));
+		}
+		piece.setColor(sf::Color::White);
+		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
+		sf::FloatRect piece_bounds = piece.getGlobalBounds();
+		piece.setPosition(piece_position);
+		piece.move(sf::Vector2f(
+			(cell_size_ - piece_bounds.width) / 2,
+			(cell_size_ - piece_bounds.height) / 2));
+		window_->draw(piece);
+	}
+}
+
+
 DrawAppInstance::DrawAppInstance(sf::RenderWindow &wind):window_(&wind)
 {
 	text_font_.loadFromFile("PT_Serif-Web-Regular.ttf");
@@ -119,6 +165,7 @@ BoardIndex DrawAppInstance::clickPositionInBoard(int x, int y)
 
 void DrawAppInstance::setMenuPosition(tgui::MenuBar::Ptr main_menu)
 {
+
 }
 
 void DrawAppInstance::drawBeatenPieces(int white_player_size, int black_player_size)
@@ -227,6 +274,12 @@ void DrawAppInstance::setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::But
 	main_menu->setSize(tgui::Layout2d(kLeftMargin + board_size_ + kRightMargin, kMenuSize));
 	unmove_button->setPosition(kLeftMargin, kTopMargin + board_size_ + kObjectMargin);
 	move_button->setPosition(kLeftMargin + unmove_button->getSize().x+kObjectMargin, kTopMargin + board_size_ + kObjectMargin);
+}
+
+void DrawAppInstance::drawPieces(const list_pieces & white_player, const list_pieces & black_pieces)
+{
+	drawPlayersPieces(white_player);
+	drawPlayersPieces(black_pieces);
 }
 
 void DrawAppInstance::setSizesAccordingToScreenResolution()

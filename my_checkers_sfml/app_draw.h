@@ -30,7 +30,7 @@ class DrawAppInstance
 	sf::Texture white_king_texture_;
 	sf::Texture black_king_texture_;
 	sf::Font text_font_;
-	
+	void drawPlayersPieces(const list_pieces& player);
 public:
 	// this function return real position on board_ by BoardIndex 
 	DrawAppInstance(sf::RenderWindow& wind);
@@ -55,4 +55,5 @@ public:
 		int white_size_,
 		int black_size_);
 	void setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button);
+	void drawPieces(const list_pieces& white_player, const list_pieces& black_pieces);
 };
