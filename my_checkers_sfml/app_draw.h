@@ -34,7 +34,7 @@ class DrawAppInstance
 public:
 	// this function return real position on board_ by BoardIndex 
 	DrawAppInstance(sf::RenderWindow& wind);
-
+	void init(sf::RenderWindow& wind);
 	void setWindow(sf::RenderWindow& wind);
 	void setSizesAccordingToScreenResolution();
 
@@ -56,4 +56,5 @@ public:
 		int black_size_);
 	void setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button);
 	void drawPieces(const list_pieces& white_player, const list_pieces& black_pieces);
+	void drawWinState(int game_state);
 };

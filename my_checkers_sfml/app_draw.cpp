@@ -121,8 +121,14 @@ void DrawAppInstance::drawPlayersPieces(const list_pieces & player)
 }
 
 
-DrawAppInstance::DrawAppInstance(sf::RenderWindow &wind):window_(&wind)
+DrawAppInstance::DrawAppInstance(sf::RenderWindow &wind)
 {
+	init(wind);
+}
+
+void DrawAppInstance::init(sf::RenderWindow & wind)
+{
+	window_ = &wind;
 	text_font_.loadFromFile("PT_Serif-Web-Regular.ttf");
 
 	white_piece_texture_.loadFromFile("white_man.png");
@@ -136,8 +142,6 @@ DrawAppInstance::DrawAppInstance(sf::RenderWindow &wind):window_(&wind)
 
 	black_piece_texture_.setSmooth(true);
 	black_king_texture_.setSmooth(true);
-	setSizesAccordingToScreenResolution();
-
 }
 
 sf::Vector2f DrawAppInstance::getRealPosition(const BoardIndex & position) const
@@ -281,6 +285,37 @@ void DrawAppInstance::drawPieces(const list_pieces & white_player, const list_pi
 	drawPlayersPieces(white_player);
 	drawPlayersPieces(black_pieces);
 }
+
+void DrawAppInstance::drawWinState(int game_state)
+{
+	sf::Text win_text("", text_font_, 100);
+	win_text.setPosition(sf::Vector2f(
+		kLeftMargin + (board_size_ / 2 - win_text.getGlobalBounds().width),
+		kTopMargin + (board_size_ / 2 - win_text.getGlobalBounds().height)));
+	switch (game_state)
+	{
+	case static_cast<int>(GameState::WHITE_WINS):
+		win_text.setString("White wins!");
+		win_text.setOutlineThickness(1.0);
+		win_text.setOutlineColor(sf::Color::Black);
+		win_text.setPosition(sf::Vector2f(
+			kLeftMargin + (board_size_ - win_text.getGlobalBounds().width) / 2,
+			kTopMargin + (board_size_ - win_text.getGlobalBounds().height) / 2));
+		window_->draw(win_text);
+		break;
+	case static_cast<int>(GameState::BLACK_WINS) :
+		win_text.setFillColor(sf::Color::Black);
+		win_text.setString("Black wins!");
+		win_text.setPosition(sf::Vector2f(
+			kLeftMargin + (board_size_ - win_text.getGlobalBounds().width) / 2,
+			kTopMargin + (board_size_ - win_text.getGlobalBounds().height) / 2));
+		window_->draw(win_text);
+		break;
+	}
+
+}
+
+
 
 void DrawAppInstance::setSizesAccordingToScreenResolution()
 {

@@ -4,42 +4,7 @@
 
 #include "Game.h"
 #include <ctime>
-void Game::drawPlayersPieces(const list_pieces& player, const sf::Texture& piece_texture, const sf::Texture& piece_king_texture)
-{
-	sf::Sprite piece;
-	for (auto players_piece : player)
-	{
-		if (players_piece.isKing())
-		{
-			piece.setTexture(piece_king_texture,true);
-			piece.setScale(sf::Vector2f(
-				cell_size_ / (1.2*piece_king_texture.getSize().x), 
-				cell_size_ / (1.2* piece_king_texture.getSize().y)));
 
-		}
-		else
-		{
-			piece.setTexture(piece_texture,true);
-			piece.setScale(sf::Vector2f(
-				cell_size_ / (1.2*piece_texture.getSize().x), 
-				cell_size_ / (1.2* piece_texture.getSize().y)));
-		}
-		piece.setColor(sf::Color::White);
-		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
-		sf::FloatRect piece_bounds = piece.getGlobalBounds();
-		piece.setPosition(piece_position);
-		piece.move(sf::Vector2f(
-			(cell_size_ - piece_bounds.width) / 2,
-			(cell_size_ - piece_bounds.height) / 2));
-		window_.draw(piece);
-	}
-}
-sf::Vector2f Game::getRealPosition(const BoardIndex & position) const
-{
-	return sf::Vector2f(
-		(position.column - 'a')*cell_size_+kLeftMargin,
-		(8 - position.row)*cell_size_+kTopMargin);
-}
 void Game::playersInit()
 {
 	int iter = 0;
@@ -69,22 +34,7 @@ void Game::playersInit()
 		}
 	}
 }
-void Game::resoursesInit()
-{
-	text_font_.loadFromFile("PT_Serif-Web-Regular.ttf");
 
-	white_piece_texture_.loadFromFile("white_man.png");
-	white_king_texture_.loadFromFile("white_queen.png");
-
-	black_piece_texture_.loadFromFile("black_man.png");
-	black_king_texture_.loadFromFile("black_queen.png");
-
-	white_piece_texture_.setSmooth(true);
-	white_king_texture_.setSmooth(true);
-
-	black_piece_texture_.setSmooth(true);
-	black_king_texture_.setSmooth(true);
-}
 void Game::widgetsInit()
 {
 	main_menu_ = tgui::MenuBar::create();
@@ -93,14 +43,21 @@ void Game::widgetsInit()
 	main_menu_->addMenuItem("Game", "New game");
 	main_menu_->addMenuItem("Game", "Staticstics");
 	main_menu_->addMenuItem("Game","Quit");
+	unmove_button_ = tgui::Button::create();
+	next_move_button_ = tgui::Button::create();
+	unmove_button_->setText("Undo move");
+	next_move_button_->setText("Next move");
 	window_for_widgets_.add(main_menu_);
+	window_for_widgets_.add(unmove_button_);
+	window_for_widgets_.add(next_move_button_);
+	draw_app_.setWidgetsPosition(main_menu_, unmove_button_, next_move_button_);
 }
 void Game::changeTurn()
 {
 	white_turn_ = !white_turn_;
 	std::swap(cur_player_, another_player_);
 	checkPiecesForBeating();
-	if (is_black_ai_ == !white_turn_)
+	if ((is_black_ai_ && !white_turn_) || (is_white_ai_ && white_turn_))
 		hightlighted_cells_.clear();
 	// drawPieces();
 }
@@ -254,15 +211,15 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 void Game::checkForWin()
 {
 	if (white_player_.empty())
-		game_state_ = BLACK_WINS;
+		game_state_ = static_cast<int>(GameState::BLACK_WINS);
 	else if (black_player_.empty())
-		game_state_ = WHITE_WINS;
+		game_state_ = static_cast<int>(GameState::WHITE_WINS);
 	else if (!checkPlayerHasMove(white_player_))
-		game_state_ = BLACK_WINS;
+		game_state_ = static_cast<int>(GameState::BLACK_WINS);
 	else if (!checkPlayerHasMove(black_player_))
-		game_state_ = WHITE_WINS;
+		game_state_ = static_cast<int>(GameState::WHITE_WINS);
 	else
-		game_state_ = NOT_ENDED;
+		game_state_ = static_cast<int>(GameState::NOT_ENDED);
 }
 void Game::makeMove(const move & move_to_make)
 {
@@ -304,12 +261,7 @@ void Game::transformIntoKings()
 		if (x.transformIntoKingIfPossible())
 			board_.getPiece(x.getPosition()) = x.getCheckersType();
 }
-BoardIndex Game::clickPositionInBoard(int x, int y)
-{
-	sf::Vector2f real_coordinates = window_.mapPixelToCoords(sf::Vector2i(x, y));
-	float row = (real_coordinates.y-kTopMargin) / cell_size_, column = (real_coordinates.x-kLeftMargin) / cell_size_;
-	return BoardIndex(int(column) + 'a', 8 - int(row));
-}
+
 void Game::Run()
 {
 	playersInit();
@@ -392,7 +344,7 @@ void Game::Run()
 			{
 				if (event.type == sf::Event::MouseButtonReleased)
 				{
-					BoardIndex click_position = clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
+					BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
 					std::cout << click_position << endl;
 					processMouseClick(click_position);
 					
@@ -400,9 +352,9 @@ void Game::Run()
 			}
 		}
 		
-		if (!game_ended && game_state_ != NOT_ENDED)
+		if (!game_ended && game_state_ != static_cast<int>(GameState::NOT_ENDED))
 		{
-			cout << (game_state_ == WHITE_WINS ? "White wins!\n" : "Black wins\n") << endl;
+			cout << (game_state_ == static_cast<int>(GameState::WHITE_WINS) ? "White wins!\n" : "Black wins\n") << endl;
 			game_ended = true;
 		}
 		redrawPosition();
@@ -461,208 +413,14 @@ void Game::saveToFile(std::string file_name)
 	out << white_turn_;
 	out.close();
 }
-void Game::drawBoard()
-{
-	sf::RectangleShape cell;
-	
-	sf::Text board_coordinates("abcdefgh", text_font_,25);
-	board_coordinates.setFillColor(sf::Color::Black);
-	board_coordinates.setPosition(0, 0);
 
-	sf::FloatRect bounds_for_calculations = board_coordinates.getGlobalBounds();
-	float text_top_position = (kTopMargin - bounds_for_calculations.height) / 2 - bounds_for_calculations.top;
-	board_coordinates.setScale(sf::Vector2f(kTopMargin / (1.2 * bounds_for_calculations.height), kTopMargin /(1.2 * bounds_for_calculations.height)));
-
-	cell.setSize(sf::Vector2f(cell_size_, cell_size_));
-	for (int i = 0; i < 8; i++) //i - row
-		for (int j = 0; j < 8; j++) //j - column
-		{	
-			cell.setPosition(getRealPosition(BoardIndex('a'+j,8-i)));	
-			sf::Color cell_color;
-			std::string coord;
-			if ((i + j) % 2 != 0)
-				cell_color = sf::Color(209, 139, 71, 255);
-				//cell_color = sf::Color::Blue;
-			else
-				cell_color = sf::Color(255, 228, 170, 255);
-				//cell_color = sf::Color::Yellow;
-			cell.setFillColor(cell_color);
-			window_.draw(cell);
-			if (j == 0)
-			{
-				//coord = 'a' + i;
-				coord += std::to_string(8-i);
-				board_coordinates.setString(coord);
-				board_coordinates.setPosition((kLeftMargin - board_coordinates.getGlobalBounds().width)/2,
-					cell_size_*(i+0.5)-board_coordinates.getCharacterSize()/2+kTopMargin);
-				window_.draw(board_coordinates);
-			}
-			if (i == 0)
-			{
-				coord = 'a' + j;
-				board_coordinates.setString(coord);
-				board_coordinates.setPosition(sf::Vector2f(cell_size_*(j + 0.5) - board_coordinates.getGlobalBounds().width/2+kLeftMargin, 0));
-				board_coordinates.move(sf::Vector2f(
-					0, 
-					text_top_position));
-				window_.draw(board_coordinates);
-			}
-		}
-	float kThickness = 0.08*cell_size_;
-	cell.setSize(sf::Vector2f(cell_size_ - kThickness*2, cell_size_ - kThickness*2));
-	for (auto x : last_moves_to_show_)
-	{
-
-		sf::Vector2f cell_position = getRealPosition(x);
-		cell.setPosition(sf::Vector2f(cell_position.x + kThickness, cell_position.y + kThickness));
-		cell.setFillColor(sf::Color(0, 0, 0, 0));
-		cell.setOutlineColor(sf::Color(118, 255, 3, 255));
-		cell.setOutlineThickness(kThickness);
-		window_.draw(cell);
-	}
-
-	for (auto x : hightlighted_cells_)
-	{
-		
-		sf::Vector2f cell_position = getRealPosition(x);
-		cell.setPosition(sf::Vector2f(cell_position.x+kThickness,cell_position.y+kThickness));
-		cell.setFillColor(sf::Color(0, 0, 0, 0));
-		cell.setOutlineColor(sf::Color(255, 193, 7, 255));
-		cell.setOutlineThickness(kThickness);
-		window_.draw(cell);
-	}
-	
-
-	// draw square around the corner of board_ to make it prettier
-	cell.setSize(sf::Vector2f(board_size_, board_size_));
-	cell.setPosition(getRealPosition(BoardIndex( 'a',8 )));
-	cell.setFillColor(sf::Color(0, 0, 0, 0));
-	cell.setOutlineColor(sf::Color::Black);
-	cell.setOutlineThickness(1.0);
-	window_.draw(cell);
-
-	//cell.setFillColor(sf::Color::Green);
-
-	// draw current turn rectange (white color for white
-	cell.setSize(sf::Vector2f(kTurnRectangleWidth, board_size_ / 2));
-	cell.setOutlineThickness(1.0);
-	if (white_turn_)
-	{
-		cell.setFillColor(sf::Color::White);
-		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + kTurnRectangleMargin, kTopMargin + board_size_ / 2));
-	}
-	else
-	{
-		cell.setFillColor(sf::Color::Black);
-		cell.setPosition(sf::Vector2f(kLeftMargin + board_size_ + kTurnRectangleMargin, kTopMargin));
-	}
-	window_.draw(cell);
-
-	float left_beaten_position =
-		kLeftMargin + board_size_ +
-		2 * kTurnRectangleMargin + kTurnRectangleWidth;
-	const int kNumberPiecesInARow = 3;
-	float diametr_beaten_piece = (kRightMargin - 3 * kTurnRectangleMargin - kTurnRectangleWidth) / kNumberPiecesInARow;
-
-	board_coordinates.setString("Beaten pieces:");
-	board_coordinates.setPosition(sf::Vector2f(
-		left_beaten_position + (kRightMargin - kTurnRectangleMargin*2- kTurnRectangleWidth - board_coordinates.getGlobalBounds().width)/2, text_top_position));
-	window_.draw(board_coordinates);
-
-	sf::RectangleShape not_beaten_piece(sf::Vector2f(diametr_beaten_piece,diametr_beaten_piece));
-	sf::Sprite beaten_piece_black(black_piece_texture_), beaten_piece_white(white_piece_texture_);
-	beaten_piece_black.setScale(
-		diametr_beaten_piece / black_piece_texture_.getSize().x,
-		diametr_beaten_piece / black_piece_texture_.getSize().y);
-	beaten_piece_white.setScale(
-		diametr_beaten_piece / white_piece_texture_.getSize().x,
-		diametr_beaten_piece / white_piece_texture_.getSize().y);
-
-	not_beaten_piece.setOutlineThickness(1.0);
-	not_beaten_piece.setOutlineColor(sf::Color(0,0,0,60));
-	not_beaten_piece.setFillColor(sf::Color(0, 0, 0, 0));
-
-	int number_beaten_pieces_black = 12 - black_player_.size(),
-		number_beaten_pieces_white = 12 - white_player_.size();
-
-	for (int i = 0; i < 12; i++)
-	{
-		int row = i / kNumberPiecesInARow,
-			column = i % kNumberPiecesInARow;
-
-		if (i < number_beaten_pieces_black)
-		{
-			beaten_piece_black.setPosition(sf::Vector2f(
-				left_beaten_position + column*diametr_beaten_piece,
-				kTopMargin + row*diametr_beaten_piece));
-			window_.draw(beaten_piece_black);
-		}
-		else
-		{
-			not_beaten_piece.setPosition(sf::Vector2f(
-				left_beaten_position + column*diametr_beaten_piece,
-				kTopMargin + row*diametr_beaten_piece));
-			window_.draw(not_beaten_piece);
-		}
-
-		if (i < number_beaten_pieces_white)
-		{
-			beaten_piece_white.setPosition(sf::Vector2f(
-				left_beaten_position + column*diametr_beaten_piece,
-				kTopMargin + board_size_/2+row*diametr_beaten_piece));
-			window_.draw(beaten_piece_white);
-		}
-		else
-		{
-			not_beaten_piece.setPosition(sf::Vector2f(
-				left_beaten_position + column*diametr_beaten_piece,
-				kTopMargin + board_size_ / 2 + row*diametr_beaten_piece));
-			window_.draw(not_beaten_piece);
-		}
-	}
-}
-
-void Game::drawPieces()
-{
-	drawPlayersPieces(white_player_, white_piece_texture_,white_king_texture_);
-	drawPlayersPieces(black_player_, black_piece_texture_,black_king_texture_);
-}
-
-void Game::drawWinState()
-{
-	sf::Text win_text("", text_font_, 100);
-	win_text.setPosition(sf::Vector2f(
-		kLeftMargin + (board_size_ / 2 - win_text.getGlobalBounds().width),
-		kTopMargin + (board_size_ / 2 - win_text.getGlobalBounds().height)));
-	switch (game_state_)
-	{
-	case WHITE_WINS:
-		win_text.setString("White wins!");
-		win_text.setOutlineThickness(1.0);
-		win_text.setOutlineColor(sf::Color::Black);
-		win_text.setPosition(sf::Vector2f(
-			kLeftMargin + (board_size_ - win_text.getGlobalBounds().width)/2,
-			kTopMargin + (board_size_ - win_text.getGlobalBounds().height)/2));
-		window_.draw(win_text);
-		break;
-	case BLACK_WINS:
-		win_text.setFillColor(sf::Color::Black);
-		win_text.setString("Black wins!");
-		win_text.setPosition(sf::Vector2f(
-			kLeftMargin + (board_size_ - win_text.getGlobalBounds().width)/2,
-			kTopMargin + (board_size_ - win_text.getGlobalBounds().height)/2));
-		window_.draw(win_text);
-		break;
-	}
-	
-}
 
 void Game::redrawPosition()
 {
 	window_.clear(sf::Color(255, 228, 170, 255));
-	drawBoard();
-	drawPieces();
-	drawWinState();
+	draw_app_.drawStaticElements(white_turn_, hightlighted_cells_, last_moves_to_show_, white_player_.size(), black_player_.size());
+	draw_app_.drawPieces(white_player_,black_player_);
+	draw_app_.drawWinState(game_state_);
 	window_for_widgets_.draw();
 	window_.display();
 }
@@ -688,7 +446,7 @@ void Game::clearAllStates()
 	black_player_.clear();
 	is_piece_clicked_ = false;
 	setWhiteTurn();
-	game_state_ = NOT_ENDED;
+	game_state_ = static_cast<int>(GameState::NOT_ENDED);
 	piece_firstly_clicked_ = nullptr;
 	must_beat_ = false;
 	clearInfoForClickedPiece();
@@ -698,8 +456,6 @@ Game::Game(int game_mode, int ai_level) :
 	white_player_(),
 	black_player_(),
 	white_turn_(true),
-	board_size_(700),
-	cell_size_(87.5),
 	hightlighted_cells_(),
 	possible_beat_moves_(),
 	possible_moves_(),
@@ -709,34 +465,14 @@ Game::Game(int game_mode, int ai_level) :
 	another_player_(&black_player_),
 	pieces_that_can_beat_(),
 	must_beat_(false),
-	game_state_(NOT_ENDED),
+	game_state_(static_cast<int>(GameState::NOT_ENDED)),
 	can_beat_many_times_(false),
-	ai_depth_(ai_level)
+	ai_depth_(ai_level),
+	draw_app_(window_)
 {
-	sf::VideoMode video_mode;
-
-	// get display resolution
-	video_mode = video_mode.getDesktopMode();
-
-	//and use it to make game playable on different screen resolution
-	unsigned int window_size = 0.8*std::min(video_mode.height, video_mode.width);// window_size = 900 * 0.8;;
-	board_size_ = window_size;
-	cell_size_ = board_size_ / 8;
-	kTopMargin = kLeftMargin = kBottomMargin = 0.042*board_size_;
-	kTurnRectangleWidth = 0.03*board_size_;
-	kTurnRectangleMargin = 0.015 * board_size_;
-	//kRightMargin = 2 * kTurnRectangleMargin + kTurnRectangleWidth;
-	kRightMargin = 0.4 * board_size_;
-	window_.create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers");
-	//window_.setView(sf::View(sf::FloatRect(0, 0, window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin)));
-
-	//set window on the middle of a screen
-	window_.setPosition(sf::Vector2i((video_mode.width - window_.getSize().x) / 2, 0));
-
+	draw_app_.setSizesAccordingToScreenResolution();
 	window_for_widgets_.setWindow(window_);
-//	widgetsInit();
-	resoursesInit();
-
+	widgetsInit();
 	is_black_ai_ = false;
 	is_white_ai_ = false;
 

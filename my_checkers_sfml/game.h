@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <sstream>
 #include <TGUI/TGUI.hpp>
+#include "app_draw.h"
 // useful operation on vectors and lists
 template <typename T>
 inline void appendVector(vector<T>& dest, const vector<T>& source)
@@ -33,16 +34,6 @@ inline typename vector<move_with_piece>::iterator findInVector(vector<move_with_
 class Game
 {
 private:
-	//margins of out board_
-	double kTextMargin = 30;
-	double kTopMargin = kTextMargin;
-	double kLeftMargin = kTextMargin;
-	double kRightMargin = kTextMargin;
-	double kBottomMargin = kTextMargin;
-	double kTurnRectangleWidth = 30;
-	double kTurnRectangleMargin = 10;
-
-
 	list_pieces white_player_;
 	list_pieces black_player_;
 	Board board_;
@@ -81,20 +72,12 @@ private:
 	bool is_piece_clicked_;
 	CheckersPiece *piece_firstly_clicked_;
 
-	float cell_size_;
-	float board_size_;
 	sf::RenderWindow window_;
 	tgui::Gui window_for_widgets_;
-	vector<std::string> strings_for_menu_;
 	tgui::MenuBar::Ptr main_menu_;
-	
-	// this function return real position on board_ by BoardIndex 
-	sf::Vector2f getRealPosition(const BoardIndex& position) const;
+	tgui::Button::Ptr unmove_button_, next_move_button_;
 
-	// this function returns BoardIndex by real position
-	BoardIndex clickPositionInBoard(int x, int y);
 
-	enum {NOT_ENDED,WHITE_WINS,BLACK_WINS};
 	int game_state_;
 
 	int game_mode_;
@@ -102,20 +85,12 @@ private:
 	// function used for drawing
 	// drawPlayersPieces draws pieces for one of players
 	// drawWinState draws big text with winner, when game ended
-	void drawPlayersPieces(const list_pieces& player, const sf::Texture& piece_texture, const sf::Texture& piece_king_texture);
-	void drawBoard();
-	void drawPieces();
-	void drawWinState();
+
+	DrawAppInstance draw_app_;
 	void redrawPosition();
 
-	sf::Texture white_piece_texture_;
-	sf::Texture black_piece_texture_;
-	sf::Texture white_king_texture_;
-	sf::Texture black_king_texture_;
-	sf::Font text_font_;
 
 	// set initial state of board_ and resourses
-	void resoursesInit();
 	void widgetsInit();
 	// check current player pieces whether at least one of them can beat
 	// if so, fill must_beat_ and pieces_that_can_beat_

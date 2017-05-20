@@ -66,6 +66,13 @@ enum class CheckersType:int
 	WHITE_KING,
 	BLACK_KING
 };
+enum class GameState:int
+{ 
+	NOT_ENDED, 
+	WHITE_WINS, 
+	BLACK_WINS 
+};
+
 struct Board
 {
 	
