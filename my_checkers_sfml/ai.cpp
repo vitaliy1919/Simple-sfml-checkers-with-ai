@@ -120,9 +120,16 @@ int Ai::evaluatePlayerPosition(int player) const
 		if (cur_piece.not_beaten)
 		{
 			if (cur_piece.piece.isKing())
-				cur_player_evaluation += king_weight * 10;
+				cur_player_evaluation += king_weight * 100;
 			else
-				cur_player_evaluation += piece_weight * 10;
+			{
+				cur_player_evaluation += piece_weight * 100;
+				if (player == WHITE_PLAYER)
+					cur_player_evaluation += 5 * cur_piece.piece.getPosition().row;
+				else
+					cur_player_evaluation += 5 * (9 - cur_piece.piece.getPosition().row);
+				cur_player_evaluation += 7 - (2 * cur_piece.piece.getPosition().column - 'a' - 'h');
+			}
 		}
 	}
 	return cur_player_evaluation;

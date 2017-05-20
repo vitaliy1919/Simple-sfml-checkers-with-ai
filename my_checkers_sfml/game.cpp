@@ -88,7 +88,7 @@ void Game::resoursesInit()
 void Game::widgetsInit()
 {
 	main_menu_ = tgui::MenuBar::create();
-	main_menu_->setSize(tgui::Layout2d(float(window_.getSize().x), 100.f));
+	main_menu_->setSize(tgui::Layout2d(float(window_.getSize().x), 25));
 	main_menu_->addMenu("Game");
 	main_menu_->addMenuItem("Game", "New game");
 	main_menu_->addMenuItem("Game", "Staticstics");
@@ -244,8 +244,8 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 	}
 	if (move_done)
 	{
-		last_moves_to_show.clear();
-		appendVector(last_moves_to_show, last_moves_of_cur_player_);
+		last_moves_to_show_.clear();
+		appendVector(last_moves_to_show_, last_moves_of_cur_player_);
 		clearInfoForClickedPiece();
 		checkForWin();
 		changeTurn();
@@ -332,7 +332,7 @@ void Game::Run()
 			else
 				best_moves_for_ai = white_ai_.findBestMove(ai_depth_);
 
-			last_moves_to_show.clear();
+			last_moves_to_show_.clear();
 			sf::Clock clock;
 			sf::Time timer = clock.getElapsedTime();
 
@@ -340,14 +340,14 @@ void Game::Run()
 			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move!=best_moves_for_ai.end();++cur_best_move)
 			{
 				
-				last_moves_to_show.push_back(cur_best_move->start_position);
+				last_moves_to_show_.push_back(cur_best_move->start_position);
 				makeMove(*cur_best_move);
 				redrawPosition();
 				clock.restart();
 				if (best_moves_for_ai.size() != 1)
 					while (clock.getElapsedTime() - timer < sf::milliseconds(500));
 				if (std::next(cur_best_move, 1) == best_moves_for_ai.end())
-					last_moves_to_show.push_back(cur_best_move->end_position);
+					last_moves_to_show_.push_back(cur_best_move->end_position);
 			}
 			checkForWin();
 			changeTurn();
@@ -355,6 +355,7 @@ void Game::Run()
 		sf::Event event;
 		while (window_.pollEvent(event))
 		{
+			window_for_widgets_.handleEvent(event);
 			// "close requested" event: we close the window
 			if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) || 
 				event.type == sf::Event::Closed)
@@ -509,7 +510,7 @@ void Game::drawBoard()
 		}
 	float kThickness = 0.08*cell_size_;
 	cell.setSize(sf::Vector2f(cell_size_ - kThickness*2, cell_size_ - kThickness*2));
-	for (auto x : last_moves_to_show)
+	for (auto x : last_moves_to_show_)
 	{
 
 		sf::Vector2f cell_position = getRealPosition(x);
@@ -659,9 +660,9 @@ void Game::drawWinState()
 void Game::redrawPosition()
 {
 	window_.clear(sf::Color(255, 228, 170, 255));
-	//drawBoard();
-	//drawPieces();
-	//drawWinState();
+	drawBoard();
+	drawPieces();
+	drawWinState();
 	window_for_widgets_.draw();
 	window_.display();
 }
@@ -733,6 +734,7 @@ Game::Game(int game_mode, int ai_level) :
 	window_.setPosition(sf::Vector2i((video_mode.width - window_.getSize().x) / 2, 0));
 
 	window_for_widgets_.setWindow(window_);
+//	widgetsInit();
 	resoursesInit();
 
 	is_black_ai_ = false;

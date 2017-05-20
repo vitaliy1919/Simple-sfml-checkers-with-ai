@@ -62,7 +62,7 @@ private:
 	vector<BoardIndex> possible_moves_;
 
 	//last moves to show on screen
-	vector<BoardIndex> last_moves_to_show;
+	vector<BoardIndex> last_moves_to_show_;
 
 	//last moves of player 
 	vector<BoardIndex> last_moves_of_cur_player_;
