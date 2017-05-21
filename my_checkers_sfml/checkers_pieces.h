@@ -68,7 +68,10 @@ enum class CheckersType:int
 };
 enum class GameState:int
 { 
-	NOT_ENDED, 
+	NOT_RUNNING,
+	PAUSED,
+	RUNNING,
+	DRAW,
 	WHITE_WINS, 
 	BLACK_WINS 
 };
@@ -85,6 +88,7 @@ struct Board
 	void movePiece(const BoardIndex& start_position, const BoardIndex& end_position);
 	bool makeKing(const BoardIndex& position);
 	bool makePiece(const BoardIndex& position);
+	void clear();
 };
 
 // this class describes CheckersPiece, that have its own posion on board_, color (white or black)

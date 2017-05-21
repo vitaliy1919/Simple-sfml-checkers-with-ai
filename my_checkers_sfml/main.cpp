@@ -20,9 +20,8 @@ int getNumber(int min, int max)
 	std::cin.get();
 	return res;
 }
-int main()
+void consoleGui()
 {
-	
 	std::string ch;
 	//std::cin >> depth;
 	do
@@ -32,7 +31,7 @@ int main()
 			"\n2. Player(white) vs Ai(black)"
 			"\n3. Ai(white) vs Player(black)"
 			"\n4. Ai vs Ai\n";
-		int inp = getNumber(1,4);
+		int inp = getNumber(1, 4);
 		int depth = 9;
 		if (inp != 1)
 		{
@@ -48,7 +47,7 @@ int main()
 		case 2:
 			game_mode = Game::BLACK_AI;
 			break;
-		case 3: 
+		case 3:
 			game_mode = Game::WHITE_AI;
 			break;
 		case 4:
@@ -64,7 +63,13 @@ int main()
 		{
 			getline(std::cin, ch);
 		} while (ch != "y" && ch != "n");
-	}while(ch != "n");
+	} while (ch != "n");
+}
+int main()
+{
+	
+	Game checkers;
+	checkers.Run();
 	//sf::RenderWindow window;
 	//const list_pieces a, b;
 	//DrawAppInstance app(window);

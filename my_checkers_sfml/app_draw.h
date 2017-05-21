@@ -40,7 +40,13 @@ public:
 
 	sf::Vector2f getRealPosition(const BoardIndex& position) const;
 	BoardIndex clickPositionInBoard(int x, int y);
-
+	float getLeftMargin() const { return kLeftMargin; }
+	float getRightMargin() const { return kRightMargin; }
+	float getTopMargin() const { return kTopMargin; }
+	float getBottomMargin() const { return kBottomMargin; }
+	float getObjectMargin() const { return kObjectMargin; }
+	float getBoardSize() const { return board_size_; }
+	float getCellSize() const { return cell_size_; }
 	
 	void drawBoard(); 
 	void drawTurn(bool white_turn);
@@ -57,4 +63,11 @@ public:
 	void setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button);
 	void drawPieces(const list_pieces& white_player, const list_pieces& black_pieces);
 	void drawWinState(int game_state);
+};
+
+class SelectGameType
+{
+	tgui::Gui *window_for_widgets_;
+	tgui::ChildWindow::Ptr choose_window_;
+	tgui::Button::Ptr ok_button_, cancel_button_;
 };

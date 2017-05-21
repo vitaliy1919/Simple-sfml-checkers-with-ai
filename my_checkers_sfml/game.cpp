@@ -35,16 +35,163 @@ void Game::playersInit()
 	}
 }
 
+void Game::gameChooseWidgetInit()
+{
+	tgui::Button::Ptr ok_button = theme_->load("Button"), cancel_button = theme_->load("Button");
+	tgui::Label::Ptr text_label_for_white = theme_->load("Label"),
+		text_label_for_black = theme_->load("Label"),
+		text_label_for_level = theme_->load("Label"),
+		text_label_for_vs = theme_->load("Label");
+	
+	choose_window_ = theme_->load("ChildWindow");
+	choose_window_->setTitle("Choose game settings: ");
+	choose_window_->setSize(window_.getSize().x / 2, window_.getSize().y / 4.5);
+	choose_window_->setTitleButtons(tgui::ChildWindow::None);
+
+	tgui::Layout2d center_coord = tgui::Layout2d(
+		int((window_.getSize().x - choose_window_->getSize().x) / 2),
+		int((window_.getSize().y - choose_window_->getSize().y) / 2));
+	choose_window_->setPosition(center_coord);
+	window_for_widgets_.add(choose_window_);
+
+	ok_button->setText("OK");	
+	cancel_button->setText("Cancel");
+	text_label_for_white->setText("White player:");
+	text_label_for_black->setText("Black player:");
+	//text_label_for_vs->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Center);
+	text_label_for_vs->setSize(20, text_label_for_vs->getSize().y);
+	text_label_for_vs->setAutoSize(true);
+	text_label_for_vs->setText("vs");
+	text_label_for_level->setText("Ai level: ");
+	text_label_for_level_state_->setText("1");
+	tgui::Layout2d 
+		choose_size = choose_window_->getSize(),
+		ok_size = ok_button->getSize(), 
+		cancel_size = cancel_button->getSize();
+	float object_margin = 2*draw_app_.getObjectMargin();
+
+	text_label_for_white->setPosition((choose_size.x / 2 - text_label_for_white->getSize().x) / 2, object_margin);
+	text_label_for_black->setPosition(choose_size.x / 2 + (choose_size.x / 2 - text_label_for_black->getSize().x) / 2, object_margin);
+	choose_window_->add(text_label_for_white);
+	choose_window_->add(text_label_for_black);
+
+	player_or_ai_choose_[0] = theme_->load("ComboBox");
+	player_or_ai_choose_[1] = theme_->load("ComboBox");
+	player_or_ai_choose_[0]->addItem("Player");
+	player_or_ai_choose_[0]->addItem("Ai");
+	player_or_ai_choose_[1]->addItem("Player");
+	player_or_ai_choose_[1]->addItem("Ai");
+
+	player_or_ai_choose_[0]->setPosition(
+		(choose_size.x / 2 - player_or_ai_choose_[0]->getSize().x) / 2,
+		2 * object_margin + text_label_for_white->getSize().y);
+	player_or_ai_choose_[1]->setPosition(
+		choose_size.x / 2 + (choose_size.x / 2 - player_or_ai_choose_[1]->getSize().x) / 2,
+		2 * object_margin + text_label_for_black->getSize().y);
+	player_or_ai_choose_[0]->setSelectedItemByIndex(0);
+	player_or_ai_choose_[1]->setSelectedItemByIndex(0);
+	choose_window_->add(player_or_ai_choose_[0]);
+	choose_window_->add(player_or_ai_choose_[1]);
+	
+	text_label_for_level->setPosition(
+		2 * object_margin, 
+		player_or_ai_choose_[0]->getPosition().y + player_or_ai_choose_[0]->getSize().y + 2 * object_margin);
+	choose_window_->add(text_label_for_level);
+	
+	level_slider_->setPosition(
+		text_label_for_level->getPosition().x+text_label_for_level->getSize().x+object_margin,
+		player_or_ai_choose_[0]->getPosition().y + player_or_ai_choose_[0]->getSize().y + 2 * object_margin);
+	level_slider_->setMinimum(1);
+	level_slider_->setMaximum(9);
+	level_slider_->setValue(1);
+	choose_window_->add(level_slider_);
+
+	text_label_for_level_state_->setPosition(
+		level_slider_->getPosition().x + level_slider_->getSize().x + object_margin,
+		level_slider_->getPosition().y);
+	choose_window_->add(text_label_for_level_state_);
+	level_slider_->connect("ValueChanged", &Game::sliderDragged, this);
+
+	cout << text_label_for_vs->getSize().x << endl;
+	text_label_for_vs->setPosition((choose_size.x - text_label_for_vs->getSize().x) / 2, player_or_ai_choose_[0]->getPosition().y);
+	choose_window_->add(text_label_for_vs);
+	ok_button->setPosition(
+		(choose_size.x - ok_size.x - cancel_size.x - object_margin) / 2,
+		choose_size.y - object_margin - ok_size.y);
+	cancel_button->setPosition(
+		(choose_size.x + ok_size.x + object_margin - cancel_size.x) / 2,
+		choose_size.y - object_margin - cancel_size.y);
+
+	ok_button->connect("pressed", &Game::okButtonClick,this);
+	cancel_button->connect("pressed", &Game::cancelButtonClick,this);
+	choose_window_->add(ok_button);
+	choose_window_->add(cancel_button);
+}
+
+void Game::okButtonClick()
+{
+	
+	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 0)
+		is_white_ai_ = false;
+	else
+		is_white_ai_ = true;
+	if (player_or_ai_choose_[1]->getSelectedItemIndex() == 0)
+		is_black_ai_ = false;
+	else
+		is_black_ai_ = true;
+	ai_depth_ = level_slider_->getValue();
+	clearAllStates();
+	playersInit();
+	//choose_window_->hide();
+	choose_window_->hideWithEffect(animation_type_,animations_duration_);
+}
+
+void Game::cancelButtonClick()
+{
+	if (game_state_ == static_cast<int>(GameState::PAUSED))
+		game_state_ = static_cast<int>(GameState::RUNNING);
+	choose_window_->hideWithEffect(animation_type_, animations_duration_);
+}
+
+void Game::menuClick(const vector<sf::String>& menu_items)
+{
+	int i = 0;
+	sf::Time timer;
+	timer = sf::seconds(0.5);
+	if (menu_items[i] == "Game")
+	{
+		i++;
+		if (menu_items[i] == "New game")
+		{
+			choose_window_->showWithEffect(animation_type_,animations_duration_);
+			if (game_state_ == static_cast<int>(GameState::RUNNING))
+				game_state_ = static_cast<int>(GameState::PAUSED);
+			else
+				game_state_ = static_cast<int>(GameState::NOT_RUNNING);
+		}
+		if (menu_items[i] == "Quit")
+			window_.close();
+	}
+}
+
+void Game::sliderDragged(int new_value)
+{
+	text_label_for_level_state_->setText(std::to_string(new_value));
+}
+
+
+
 void Game::widgetsInit()
 {
-	main_menu_ = tgui::MenuBar::create();
+	main_menu_ = theme_->load("MenuBar");
 	main_menu_->setSize(tgui::Layout2d(float(window_.getSize().x), 25));
 	main_menu_->addMenu("Game");
 	main_menu_->addMenuItem("Game", "New game");
 	main_menu_->addMenuItem("Game", "Staticstics");
 	main_menu_->addMenuItem("Game","Quit");
-	unmove_button_ = tgui::Button::create();
-	next_move_button_ = tgui::Button::create();
+	main_menu_->connect("MenuItemClicked",&Game::menuClick,this);
+	unmove_button_ = theme_->load("Button");
+	next_move_button_ = theme_->load("Button");
 	unmove_button_->setText("Undo move");
 	next_move_button_->setText("Next move");
 	window_for_widgets_.add(main_menu_);
@@ -219,7 +366,7 @@ void Game::checkForWin()
 	else if (!checkPlayerHasMove(black_player_))
 		game_state_ = static_cast<int>(GameState::WHITE_WINS);
 	else
-		game_state_ = static_cast<int>(GameState::NOT_ENDED);
+		game_state_ = static_cast<int>(GameState::RUNNING);
 }
 void Game::makeMove(const move & move_to_make)
 {
@@ -266,29 +413,35 @@ void Game::Run()
 {
 	playersInit();
 	checkPiecesForBeating();
-	bool game_ended = false;
+	game_ended_ = false;
 	while (window_.isOpen())
 	{
 		// check all the window's events that were triggered since the last iteration of the loop
 		
-		if (!game_ended && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
+		if (game_state_ == static_cast<int>(GameState::RUNNING) &&
+			!game_ended_ && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
 		{
 			if (!white_turn_ && is_black_ai_)
 				black_ai_.update(white_player_, black_player_, board_);
 			else
 				white_ai_.update(white_player_, black_player_, board_);
-
+			sf::Clock clock;
+			sf::Time timer = clock.getElapsedTime();
 			std::list<move> best_moves_for_ai;
+			timer = clock.getElapsedTime() - timer;
 			if (!white_turn_ && is_black_ai_)
 				best_moves_for_ai = black_ai_.findBestMove(ai_depth_);
 			else
 				best_moves_for_ai = white_ai_.findBestMove(ai_depth_);
 
 			last_moves_to_show_.clear();
-			sf::Clock clock;
-			sf::Time timer = clock.getElapsedTime();
-
-			//while (clock.getElapsedTime() - timer < sf::milliseconds(500));
+			
+			if (timer.asMilliseconds() <= 500)
+			{
+				sf::Time wait_time = sf::milliseconds(500) - timer;
+				timer = clock.getElapsedTime();
+				while (clock.getElapsedTime() - timer < wait_time);
+			}
 			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move!=best_moves_for_ai.end();++cur_best_move)
 			{
 				
@@ -317,6 +470,11 @@ void Game::Run()
 				//window_.setSize(sf::Vector2u(event.size.width, event.size.height));
 				//window_.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
 			}
+			if (event.type == sf::Event::MouseWheelMoved)
+				choose_window_->show();
+
+			if (game_state_ != static_cast<int>(GameState::RUNNING))
+				continue;
 			if (event.type == sf::Event::KeyReleased)
 			{
 				switch (event.key.code)
@@ -325,7 +483,7 @@ void Game::Run()
 					saveToFile("position.check");
 					break;
 				case sf::Keyboard::R:
-					game_ended = false;
+					game_ended_ = false;
 					loadFromFile("position.check");
 					break;
 				case sf::Keyboard::F:
@@ -340,22 +498,22 @@ void Game::Run()
 
 
 			}
-			if (!game_ended)
+			if (!game_ended_)
 			{
 				if (event.type == sf::Event::MouseButtonReleased)
 				{
 					BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
 					std::cout << click_position << endl;
 					processMouseClick(click_position);
-					
+
 				}
 			}
 		}
 		
-		if (!game_ended && game_state_ != static_cast<int>(GameState::NOT_ENDED))
+		if (!game_ended_ && (game_state_ == static_cast<int>(GameState::BLACK_WINS) || game_state_ == static_cast<int>(GameState::WHITE_WINS)))
 		{
 			cout << (game_state_ == static_cast<int>(GameState::WHITE_WINS) ? "White wins!\n" : "Black wins\n") << endl;
-			game_ended = true;
+			game_ended_ = true;
 		}
 		redrawPosition();
 	}
@@ -442,13 +600,20 @@ bool Game::checkPlayerHasMove(const list_pieces & player)
 
 void Game::clearAllStates()
 {
+	window_for_widgets_.removeAllWidgets();
+	widgetsInit();
+	draw_app_.setWidgetsPosition(main_menu_,unmove_button_,next_move_button_);
+	gameChooseWidgetInit();
 	white_player_.clear();
 	black_player_.clear();
 	is_piece_clicked_ = false;
 	setWhiteTurn();
-	game_state_ = static_cast<int>(GameState::NOT_ENDED);
+	game_state_ = static_cast<int>(GameState::RUNNING);
 	piece_firstly_clicked_ = nullptr;
 	must_beat_ = false;
+	last_moves_to_show_.clear();
+	board_.clear();
+	game_ended_ = false;
 	clearInfoForClickedPiece();
 }
 
@@ -465,7 +630,7 @@ Game::Game(int game_mode, int ai_level) :
 	another_player_(&black_player_),
 	pieces_that_can_beat_(),
 	must_beat_(false),
-	game_state_(static_cast<int>(GameState::NOT_ENDED)),
+	game_state_(static_cast<int>(GameState::NOT_RUNNING)),
 	can_beat_many_times_(false),
 	ai_depth_(ai_level),
 	draw_app_(window_)
@@ -473,9 +638,10 @@ Game::Game(int game_mode, int ai_level) :
 	draw_app_.setSizesAccordingToScreenResolution();
 	window_for_widgets_.setWindow(window_);
 	widgetsInit();
+	gameChooseWidgetInit();
 	is_black_ai_ = false;
 	is_white_ai_ = false;
-
+	animations_duration_ = sf::seconds(0.2);
 	if (game_mode == WHITE_AI || game_mode == TWO_AI)
 		is_white_ai_ = true;
 	if (game_mode == BLACK_AI || game_mode == TWO_AI)

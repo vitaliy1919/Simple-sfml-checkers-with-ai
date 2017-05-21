@@ -77,9 +77,16 @@ private:
 	tgui::MenuBar::Ptr main_menu_;
 	tgui::Button::Ptr unmove_button_, next_move_button_;
 
+	sf::Time animations_duration_;
+	tgui::ShowAnimationType animation_type_ = tgui::ShowAnimationType::Scale;
+	tgui::ChildWindow::Ptr choose_window_;
+	tgui::Theme::Ptr theme_ = tgui::Theme::create();
+	tgui::Label::Ptr text_label_for_level_state_ = theme_->load("Label");
+	tgui::ComboBox::Ptr player_or_ai_choose_[2];
+	tgui::Slider::Ptr level_slider_ = theme_->load("Slider");
 
 	int game_state_;
-
+	bool game_ended_;
 	int game_mode_;
 	int ai_depth_;
 	// function used for drawing
@@ -91,6 +98,11 @@ private:
 
 
 	// set initial state of board_ and resourses
+	void gameChooseWidgetInit();
+	void okButtonClick();
+	void cancelButtonClick();
+	void menuClick(const vector<sf::String>& menu_items);
+	void sliderDragged(int new_value);
 	void widgetsInit();
 	// check current player pieces whether at least one of them can beat
 	// if so, fill must_beat_ and pieces_that_can_beat_

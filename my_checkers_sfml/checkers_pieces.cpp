@@ -226,3 +226,10 @@ bool Board::makePiece(const BoardIndex & position)
 		return false;
 	return true;
 }
+
+void Board::clear()
+{
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+			checkers_map[i][j] = static_cast<int>(CheckersType::EMPTY);
+}
