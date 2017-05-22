@@ -1,6 +1,7 @@
 #pragma once
 #include "checkers_pieces.h"
 #include "ai.h"
+#include "icon.h"
 #include <fstream>
 #include <algorithm>
 #include <sstream>
@@ -78,7 +79,7 @@ private:
 	tgui::Button::Ptr unmove_button_, next_move_button_;
 
 	sf::Time animations_duration_;
-	tgui::ShowAnimationType animation_type_ = tgui::ShowAnimationType::Scale;
+	tgui::ShowAnimationType animation_type_ = tgui::ShowAnimationType::SlideFromTop;
 	tgui::ChildWindow::Ptr choose_window_;
 	tgui::Theme::Ptr theme_ = tgui::Theme::create();
 	tgui::Label::Ptr text_label_for_level_state_ = theme_->load("Label");

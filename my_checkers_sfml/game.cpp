@@ -44,6 +44,7 @@ void Game::gameChooseWidgetInit()
 		text_label_for_vs = theme_->load("Label");
 	
 	choose_window_ = theme_->load("ChildWindow");
+	choose_window_->setResizable(true);
 	choose_window_->setTitle("Choose game settings: ");
 	choose_window_->setSize(window_.getSize().x / 2, window_.getSize().y / 4.5);
 	choose_window_->setTitleButtons(tgui::ChildWindow::None);
@@ -112,7 +113,6 @@ void Game::gameChooseWidgetInit()
 	choose_window_->add(text_label_for_level_state_);
 	level_slider_->connect("ValueChanged", &Game::sliderDragged, this);
 
-	cout << text_label_for_vs->getSize().x << endl;
 	text_label_for_vs->setPosition((choose_size.x - text_label_for_vs->getSize().x) / 2, player_or_ai_choose_[0]->getPosition().y);
 	choose_window_->add(text_label_for_vs);
 	ok_button->setPosition(
@@ -194,6 +194,8 @@ void Game::widgetsInit()
 	next_move_button_ = theme_->load("Button");
 	unmove_button_->setText("Undo move");
 	next_move_button_->setText("Next move");
+	unmove_button_->hide();
+	next_move_button_->hide();
 	window_for_widgets_.add(main_menu_);
 	window_for_widgets_.add(unmove_button_);
 	window_for_widgets_.add(next_move_button_);
@@ -389,8 +391,6 @@ void Game::checkPiecesForBeating()
 	pieces_that_can_beat_.clear();
 	for (auto x : *cur_player_)
 	{
-		if (x.getPosition() == BoardIndex('b', 4))
-			cout << x.getPosition() << endl;
 		if (!(x.possibleBeatMoves(*cur_player_, *another_player_, board_).empty()))
 		{
 			pieces_that_can_beat_.push_back(x);
@@ -467,7 +467,8 @@ void Game::Run()
 				window_.close();
 			if (event.type == sf::Event::Resized)
 			{
-				//window_.setSize(sf::Vector2u(event.size.width, event.size.height));
+				float aspect_ratio = draw_app_.getAspectRatio();
+				window_.setSize(sf::Vector2u(event.size.width, event.size.width/aspect_ratio));
 				//window_.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
 			}
 			if (event.type == sf::Event::MouseWheelMoved)
@@ -503,7 +504,7 @@ void Game::Run()
 				if (event.type == sf::Event::MouseButtonReleased)
 				{
 					BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
-					std::cout << click_position << endl;
+					//std::cout << click_position << endl;
 					processMouseClick(click_position);
 
 				}
@@ -577,7 +578,8 @@ void Game::redrawPosition()
 {
 	window_.clear(sf::Color(255, 228, 170, 255));
 	draw_app_.drawStaticElements(white_turn_, hightlighted_cells_, last_moves_to_show_, white_player_.size(), black_player_.size());
-	draw_app_.drawPieces(white_player_,black_player_);
+	int cur_color = (white_turn_ ? CheckersPiece::WHITE : CheckersPiece::BLACK);
+	draw_app_.drawPieces(white_player_,black_player_,game_state_,cur_color);
 	draw_app_.drawWinState(game_state_);
 	window_for_widgets_.draw();
 	window_.display();
@@ -637,6 +639,7 @@ Game::Game(int game_mode, int ai_level) :
 {
 	draw_app_.setSizesAccordingToScreenResolution();
 	window_for_widgets_.setWindow(window_);
+	window_.setIcon(gimp_image.width, gimp_image.height, gimp_image.pixel_data);
 	widgetsInit();
 	gameChooseWidgetInit();
 	is_black_ai_ = false;

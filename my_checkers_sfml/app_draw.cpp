@@ -75,7 +75,7 @@ void DrawAppInstance::drawTurn( bool white_turn)
 	window_->draw(turn_rectangle);
 }
 
-void DrawAppInstance::drawPlayersPieces(const list_pieces & player)
+void DrawAppInstance::drawPlayersPieces(const list_pieces & player, int game_state, int turn)
 {
 	sf::Sprite piece;
 	const sf::Texture *piece_texture, *piece_king_texture;
@@ -109,7 +109,11 @@ void DrawAppInstance::drawPlayersPieces(const list_pieces & player)
 				cell_size_ / (1.2*piece_texture->getSize().x),
 				cell_size_ / (1.2* piece_texture->getSize().y)));
 		}
-		piece.setColor(sf::Color::White);
+		if (game_state == static_cast<int>(GameState::NOT_RUNNING))
+			piece.setColor(sf::Color(255, 255, 255, 64));
+		else if (game_state == static_cast<int>(GameState::RUNNING) && color != turn)
+			piece.setColor(sf::Color(255, 255, 255, 150));
+
 		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
 		sf::FloatRect piece_bounds = piece.getGlobalBounds();
 		piece.setPosition(piece_position);
@@ -280,10 +284,10 @@ void DrawAppInstance::setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::But
 	move_button->setPosition(kLeftMargin + unmove_button->getSize().x+kObjectMargin, kTopMargin + board_size_ + kObjectMargin);
 }
 
-void DrawAppInstance::drawPieces(const list_pieces & white_player, const list_pieces & black_pieces)
+void DrawAppInstance::drawPieces(const list_pieces & white_player, const list_pieces & black_pieces, int game_state, int turn)
 {
-	drawPlayersPieces(white_player);
-	drawPlayersPieces(black_pieces);
+	drawPlayersPieces(white_player, game_state, turn);
+	drawPlayersPieces(black_pieces, game_state, turn);
 }
 
 void DrawAppInstance::drawWinState(int game_state)
@@ -350,6 +354,7 @@ void DrawAppInstance::setSizesAccordingToScreenResolution()
 	window_->create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers");
 
 
+	aspect_ratio_ = float(window_->getSize().x) / window_->getSize().y;
 	//set window in the middle of a screen
 	window_->setPosition(sf::Vector2i((video_mode.width - window_->getSize().x) / 2, 0));
 }

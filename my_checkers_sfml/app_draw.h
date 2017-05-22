@@ -23,6 +23,7 @@ class DrawAppInstance
 	float kUnmoveButtonSize;
 	float kTurnRectangleWidth;
 	
+	float aspect_ratio_;
 
 	//tgui::Gui *window_for_widgets_;
 	sf::Texture white_piece_texture_;
@@ -30,7 +31,7 @@ class DrawAppInstance
 	sf::Texture white_king_texture_;
 	sf::Texture black_king_texture_;
 	sf::Font text_font_;
-	void drawPlayersPieces(const list_pieces& player);
+	void drawPlayersPieces(const list_pieces& player,int game_state,int turn);
 public:
 	// this function return real position on board_ by BoardIndex 
 	DrawAppInstance(sf::RenderWindow& wind);
@@ -47,7 +48,7 @@ public:
 	float getObjectMargin() const { return kObjectMargin; }
 	float getBoardSize() const { return board_size_; }
 	float getCellSize() const { return cell_size_; }
-	
+	float getAspectRatio() const { return aspect_ratio_; }
 	void drawBoard(); 
 	void drawTurn(bool white_turn);
 	void drawBeatenPieces(int white_player_size, int black_player_size);
@@ -61,7 +62,7 @@ public:
 		int white_size_,
 		int black_size_);
 	void setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button);
-	void drawPieces(const list_pieces& white_player, const list_pieces& black_pieces);
+	void drawPieces(const list_pieces& white_player, const list_pieces& black_pieces, int game_state, int turn);
 	void drawWinState(int game_state);
 };
 
