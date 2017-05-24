@@ -40,7 +40,6 @@ void Game::gameChooseWidgetInit()
 	tgui::Button::Ptr ok_button = theme_->load("Button"), cancel_button = theme_->load("Button");
 	tgui::Label::Ptr text_label_for_white = theme_->load("Label"),
 		text_label_for_black = theme_->load("Label"),
-		text_label_for_level = theme_->load("Label"),
 		text_label_for_vs = theme_->load("Label");
 	
 	choose_window_ = theme_->load("ChildWindow");
@@ -63,7 +62,7 @@ void Game::gameChooseWidgetInit()
 	text_label_for_vs->setSize(20, text_label_for_vs->getSize().y);
 	text_label_for_vs->setAutoSize(true);
 	text_label_for_vs->setText("vs");
-	text_label_for_level->setText("Ai level: ");
+	text_label_for_level_->setText("Ai level: ");
 	text_label_for_level_state_->setText("1");
 	tgui::Layout2d 
 		choose_size = choose_window_->getSize(),
@@ -90,22 +89,25 @@ void Game::gameChooseWidgetInit()
 		choose_size.x / 2 + (choose_size.x / 2 - player_or_ai_choose_[1]->getSize().x) / 2,
 		2 * object_margin + text_label_for_black->getSize().y);
 	player_or_ai_choose_[0]->setSelectedItemByIndex(0);
-	player_or_ai_choose_[1]->setSelectedItemByIndex(0);
+	player_or_ai_choose_[1]->setSelectedItemByIndex(1);
+	player_or_ai_choose_[0]->connect("ItemSelected", &Game::comboBoxConnectWithSlider, this);
+	player_or_ai_choose_[1]->connect("ItemSelected", &Game::comboBoxConnectWithSlider, this);
 	choose_window_->add(player_or_ai_choose_[0]);
 	choose_window_->add(player_or_ai_choose_[1]);
 	
-	text_label_for_level->setPosition(
+	text_label_for_level_->setPosition(
 		2 * object_margin, 
 		player_or_ai_choose_[0]->getPosition().y + player_or_ai_choose_[0]->getSize().y + 2 * object_margin);
-	choose_window_->add(text_label_for_level);
+	choose_window_->add(text_label_for_level_);
 	
 	level_slider_->setPosition(
-		text_label_for_level->getPosition().x+text_label_for_level->getSize().x+object_margin,
+		text_label_for_level_->getPosition().x+text_label_for_level_->getSize().x+object_margin,
 		player_or_ai_choose_[0]->getPosition().y + player_or_ai_choose_[0]->getSize().y + 2 * object_margin);
 	level_slider_->setMinimum(1);
 	level_slider_->setMaximum(9);
 	level_slider_->setValue(1);
 	choose_window_->add(level_slider_);
+	comboBoxConnectWithSlider();
 
 	text_label_for_level_state_->setPosition(
 		level_slider_->getPosition().x + level_slider_->getSize().x + object_margin,
@@ -140,17 +142,40 @@ void Game::okButtonClick()
 	else
 		is_black_ai_ = true;
 	ai_depth_ = level_slider_->getValue();
+	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 1)
+		choose_window_->hide();
+	else
+		choose_window_->hideWithEffect(animation_type_, animations_duration_);
 	clearAllStates();
 	playersInit();
-	//choose_window_->hide();
-	choose_window_->hideWithEffect(animation_type_,animations_duration_);
+	
 }
 
 void Game::cancelButtonClick()
 {
 	if (game_state_ == static_cast<int>(GameState::PAUSED))
 		game_state_ = static_cast<int>(GameState::RUNNING);
-	choose_window_->hideWithEffect(animation_type_, animations_duration_);
+	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 1)
+		choose_window_->hide();
+	else
+		choose_window_->hideWithEffect(animation_type_, animations_duration_);
+}
+
+void Game::comboBoxConnectWithSlider()
+{
+	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 0 &&
+		player_or_ai_choose_[1]->getSelectedItemIndex() == 0)
+	{
+		level_slider_->hide();
+		text_label_for_level_state_->hide();
+		text_label_for_level_->hide();
+	}
+	else
+	{
+		level_slider_->show();
+		text_label_for_level_state_->show();
+		text_label_for_level_->show();
+	}
 }
 
 void Game::menuClick(const vector<sf::String>& menu_items)
@@ -163,6 +188,10 @@ void Game::menuClick(const vector<sf::String>& menu_items)
 		i++;
 		if (menu_items[i] == "New game")
 		{
+			window_for_widgets_.removeAllWidgets();
+			widgetsInit();
+			draw_app_.setWidgetsPosition(main_menu_, unmove_button_, next_move_button_);
+			gameChooseWidgetInit();
 			choose_window_->showWithEffect(animation_type_,animations_duration_);
 			if (game_state_ == static_cast<int>(GameState::RUNNING))
 				game_state_ = static_cast<int>(GameState::PAUSED);
@@ -581,6 +610,14 @@ void Game::redrawPosition()
 	int cur_color = (white_turn_ ? CheckersPiece::WHITE : CheckersPiece::BLACK);
 	draw_app_.drawPieces(white_player_,black_player_,game_state_,cur_color);
 	draw_app_.drawWinState(game_state_);
+	if (game_state_ == static_cast<int>(GameState::NOT_RUNNING) ||
+		game_state_ == static_cast<int>(GameState::PAUSED))
+	{
+		sf::Texture trasparent_image;
+		trasparent_image.loadFromFile("transparent.png");
+		sf::Sprite spr(trasparent_image);
+		window_.draw(spr);
+	}
 	window_for_widgets_.draw();
 	window_.display();
 }
@@ -602,10 +639,6 @@ bool Game::checkPlayerHasMove(const list_pieces & player)
 
 void Game::clearAllStates()
 {
-	window_for_widgets_.removeAllWidgets();
-	widgetsInit();
-	draw_app_.setWidgetsPosition(main_menu_,unmove_button_,next_move_button_);
-	gameChooseWidgetInit();
 	white_player_.clear();
 	black_player_.clear();
 	is_piece_clicked_ = false;

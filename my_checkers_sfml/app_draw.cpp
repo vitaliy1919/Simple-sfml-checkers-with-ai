@@ -1,3 +1,7 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include "app_draw.h"
 void DrawAppInstance::drawBoard()
 {
@@ -274,6 +278,10 @@ void DrawAppInstance::drawStaticElements(bool is_white_move,
 	highlightCells(higlighted, sf::Color(255, 193, 7, 255));
 	drawTurn(is_white_move);
 	drawBeatenPieces(white_size_,black_size_);
+	/*sf::Texture trasparent_image;
+	trasparent_image.loadFromFile("transparent.png");
+	sf::Sprite spr(trasparent_image);
+	window_->draw(spr);*/
 
 }
 

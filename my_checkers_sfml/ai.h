@@ -81,7 +81,7 @@ public:
 	enum { WHITE_PLAYER, BLACK_PLAYER };
 	Ai(const list_pieces& white = list_pieces(), const list_pieces& black = list_pieces(), const Board& b = Board(), int color = 0) :
 		ai_player_(color) ,iter_piece_beat_multiple_(-1),
-		board_(b)
+		board_(b),number_nodes_(0)
 	{
 		fromListToArray(white, white_player_, white_player_size_);
 		fromListToArray(black, black_player_, black_player_size_);

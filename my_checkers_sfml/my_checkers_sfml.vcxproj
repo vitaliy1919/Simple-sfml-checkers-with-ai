@@ -33,12 +33,6 @@
     <ClInclude Include="icon.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="my_checkers_sfml.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\..\..\..\Downloads\checkers.ico" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{c1f95d82-4ff7-4e05-bc95-60fd86bb9a31}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

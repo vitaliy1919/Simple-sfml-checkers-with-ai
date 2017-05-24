@@ -82,7 +82,8 @@ private:
 	tgui::ShowAnimationType animation_type_ = tgui::ShowAnimationType::SlideFromTop;
 	tgui::ChildWindow::Ptr choose_window_;
 	tgui::Theme::Ptr theme_ = tgui::Theme::create();
-	tgui::Label::Ptr text_label_for_level_state_ = theme_->load("Label");
+	tgui::Label::Ptr text_label_for_level_state_ = theme_->load("Label"),
+		text_label_for_level_ = theme_->load("Label");
 	tgui::ComboBox::Ptr player_or_ai_choose_[2];
 	tgui::Slider::Ptr level_slider_ = theme_->load("Slider");
 
@@ -102,6 +103,7 @@ private:
 	void gameChooseWidgetInit();
 	void okButtonClick();
 	void cancelButtonClick();
+	void comboBoxConnectWithSlider();
 	void menuClick(const vector<sf::String>& menu_items);
 	void sliderDragged(int new_value);
 	void widgetsInit();
