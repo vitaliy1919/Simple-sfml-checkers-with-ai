@@ -13,11 +13,13 @@ inline void appendVector(vector<T>& dest, const vector<T>& source)
 {
 	dest.insert(dest.end(), source.begin(), source.end());
 }
-inline void appendVector(vector<BoardIndex>& dest, const list_pieces& source)
+inline void appendVector(vector<BoardIndex>& dest, const CheckersPieceWithState* source)
 {
-	for (auto x : source)
-		dest.push_back(x.getPosition());
-}
+	for (int i=0;i<12;i++)
+		if (source[i].not_beaten)
+			dest.push_back(source[i].piece.getPosition());
+}	
+//bool is_in(const list_pieces& pieces, key);
 template <typename T>
 inline typename vector<T>::iterator findInVector(vector<T>& source, T key)
 {
@@ -35,12 +37,12 @@ inline typename vector<move_with_piece>::iterator findInVector(vector<move_with_
 class Game
 {
 private:
-	list_pieces white_player_;
-	list_pieces black_player_;
+	CheckersPieceWithState white_player_[12];
+	CheckersPieceWithState black_player_[12];
 	Board board_;
 	bool white_turn_;
-	list_pieces *cur_player_;
-	list_pieces *another_player_;
+	CheckersPieceWithState *cur_player_;
+	CheckersPieceWithState *another_player_;
 
 	bool is_white_ai_;
 	bool is_black_ai_;
@@ -65,13 +67,13 @@ private:
 	// pieces_that_can_beat_ contains all pieces which can beat
 	bool must_beat_;
 	bool can_beat_many_times_;
-	list_pieces pieces_that_can_beat_;
+	std::list<CheckersPiece> pieces_that_can_beat_;
 
 	// if we click on piece we store this in is_piece_clicked_
 	// and also store pointer to the element in piece_firstly_clicked_
 
 	bool is_piece_clicked_;
-	CheckersPiece *piece_firstly_clicked_;
+	int piece_firstly_clicked_;
 
 	sf::RenderWindow window_;
 	tgui::Gui window_for_widgets_;
@@ -138,7 +140,7 @@ private:
 	void makeMove(const move& move_to_make);
 	// checks wthether given player has at least on move
 	// used in checkForWin
-	bool checkPlayerHasMove(const list_pieces& player);
+	bool checkPlayerHasMove(const CheckersPieceWithState* player);
 
 	// clears board_ state, doesn't work properly now
 	// used for save and load game positions
@@ -149,8 +151,8 @@ public:
 	void playersInit();
 
 	void Run();
-	list_pieces getWhitePlayer() const { return white_player_; }
-	list_pieces getBlackPlayer() const { return black_player_; }
+	const CheckersPieceWithState* getWhitePlayer() const { return white_player_; }
+	const CheckersPieceWithState* getBlackPlayer() const { return black_player_; }
 	void setWhiteTurn();
 	void setBlackTurn();
 

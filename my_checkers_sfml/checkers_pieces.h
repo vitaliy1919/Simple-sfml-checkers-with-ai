@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <array>
 #include <utility>
 #include <SFML/Graphics.hpp>
 using std::vector;
@@ -13,16 +14,18 @@ using std::cout;
 
 
 class CheckersPiece;
+struct CheckersPieceWithState;
 struct BoardIndex;
 struct Board;
 
 // used to store pieces of each player
 // list is used because we don't need random access, but interested in constant time element erasa
-typedef std::list<CheckersPiece> list_pieces; 
+//typedef std::array<CheckersPieceWithState,12> list_pieces; 
 
-typedef list_pieces::iterator pieces_iterator;
-typedef list_pieces::const_iterator const_pieces_iterator;
-typedef pair<BoardIndex, pieces_iterator> move_with_piece;
+int sizeOfPieces(const CheckersPieceWithState* pieces);
+//typedef list_pieces::iterator pieces_iterator;
+//typedef list_pieces::const_iterator const_pieces_iterator;
+typedef pair<BoardIndex, int> move_with_piece;
 
 //this struct represents index of our checkers board_
 struct BoardIndex
@@ -39,20 +42,19 @@ struct BoardIndex
 	inline bool isInBoard() const { return (column >= 'a' && column <= 'h') && (row >= 1 && row <= 8);}
 
 	//return itetaror to piece (in pieces) on position, if there is no piece, return pieces.end()
-	pieces_iterator checkForPieces(list_pieces& pieces) const; 
+	int checkForPieces(const CheckersPieceWithState* pieces) const; 
 
 	//return color of piece on position, if position is empty - return -1
 	int checkForPieces(const Board& board) const; 
 
 	//retun if there is piece on position:
-	bool checkForPiecesBool(list_pieces& pieces) const { return checkForPieces(pieces) != pieces.end();  }
+	bool checkForPiecesBool(const CheckersPieceWithState* pieces) const { return checkForPieces(pieces) != -1;  }
 	bool checkForPiecesBool(const Board& board) const;
 	//void checkForBeatingAndAddToPossibleMoves(const list_pieces& pieces, vector<move_with_piece> possible_moves) const;
 };
-inline bool isInBoard(const BoardIndex& to_check) { return to_check.isInBoard(); }
+//inline bool isInBoard(const BoardIndex& to_check) { return to_check.isInBoard(); }
 ostream& operator<<(ostream& os, const BoardIndex& to_show);
 istream& operator>>(istream& is, BoardIndex& to_input);
-pieces_iterator checkForPieces(const BoardIndex& position, list_pieces& pieces);
 inline bool operator==(const BoardIndex& a, const BoardIndex& b) { return (a.column == b.column) && (a.row == b.row); }
 inline bool operator!=(const BoardIndex& a, const BoardIndex& b) { return !(a == b); }
 
@@ -110,22 +112,29 @@ private:
 
 	void addPossibleMoveBeat(
 		BoardIndex(BoardIndex::*pf)() const,
-		list_pieces& player_pieces, list_pieces& opponent_pieces, Board& board,
+		const CheckersPieceWithState* player_pieces, 
+		const CheckersPieceWithState* opponent_pieces, Board& board,
 		vector<move_with_piece>& possible_moves) const;
 
 	//the same, but generate possible moves
 	//resulting moves are stored in possible_moves which contains only moves 
 
 	void addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
-		list_pieces& player_pieces, list_pieces& opponent_pieces,Board& board,
+		const CheckersPieceWithState* player_pieces, 
+		const CheckersPieceWithState* opponent_pieces,Board& board,
 		vector<BoardIndex>& possible_moves) const;
 public:
 	enum { BLACK, WHITE };
 	explicit CheckersPiece(const BoardIndex& pos = BoardIndex(0,0),int color = WHITE,bool is_king = false) :position_(pos), color_(color), is_king_(is_king) {}
 
 	// generate possible moves and possible beat moves for CheckerPiece
-	vector<move_with_piece> possibleBeatMoves(list_pieces& player_pieces, list_pieces& opponent_pieces, Board& board) const;
-	vector<BoardIndex> possibleMoves(list_pieces& player_pieces,  list_pieces& opponent_pieces, Board& board) const;
+	vector<move_with_piece> possibleBeatMoves(
+		const CheckersPieceWithState* player_pieces, 
+		const CheckersPieceWithState* opponent_pieces, Board& board) const;
+	vector<BoardIndex> possibleMoves(
+		const CheckersPieceWithState* player_pieces, 
+		const CheckersPieceWithState* opponent_pieces, 
+		Board& board) const;
 
 	// checks whether this piece is on right row to became a king
 	// return true if can
@@ -153,4 +162,11 @@ public:
 	}
 	friend ostream& operator<<(ostream& os, const CheckersPiece& piece_to_show);
 	friend istream& operator>>(istream& is, CheckersPiece& piece_to_input);
+};
+
+struct CheckersPieceWithState
+{
+	CheckersPiece piece;
+	bool not_beaten;
+	CheckersPieceWithState(const CheckersPiece& ch_piece = CheckersPiece(), bool n_beaten = true) :piece(ch_piece), not_beaten(n_beaten) {}
 };

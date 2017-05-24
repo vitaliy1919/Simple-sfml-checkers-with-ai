@@ -13,7 +13,7 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			white_player_.push_back(CheckersPiece(BoardIndex(i, j)));
+			white_player_[iter].piece = CheckersPiece(BoardIndex(i, j));
 			/*white_player_[iter].setPosition({ i,j });
 			white_player_[iter].setColor(CheckersPiece::WHITE);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::WHITE_PIECE);
@@ -26,7 +26,7 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			black_player_.push_back(CheckersPiece( BoardIndex(i, j), CheckersPiece::BLACK ));
+			white_player_[iter].piece = CheckersPiece( BoardIndex(i, j), CheckersPiece::BLACK );
 			/*black_player_[iter].setPosition({ i,j });
 			black_player_[iter].setColor(CheckersPiece::BLACK);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::BLACK_PIECE);
@@ -254,22 +254,22 @@ void Game::processMouseClick(const BoardIndex& click_position)
 		moveClickedPiece(click_position);
 	else
 	{
-		pieces_iterator piece_on_position = click_position.checkForPieces(*cur_player_);
-		if (piece_on_position != cur_player_->end())
+		int piece_on_position = click_position.checkForPieces(cur_player_);
+		if (piece_on_position != -1)
 		{
 			last_moves_of_cur_player_.push_back(click_position);
 			if (must_beat_)
 			{
 				// check whether piece_on_position can beat
-				pieces_iterator piece_which_beat_iter = std::find(
+				auto piece_which_beat_iter = std::find(
 					pieces_that_can_beat_.begin(),
 					pieces_that_can_beat_.end(),
-					*piece_on_position);
+					cur_player_[piece_on_position].piece);
 				if (piece_which_beat_iter != pieces_that_can_beat_.end())
 				{
 					// if clicked on right piece - fill info about it
 					is_piece_clicked_ = true;
-					possible_beat_moves_ = piece_on_position->possibleBeatMoves(*cur_player_, *another_player_, board_);
+					possible_beat_moves_ = cur_piece_on_position->possibleBeatMoves(*cur_player_, *another_player_, board_);
 					piece_firstly_clicked_ = &(*piece_on_position);
 					// clear hightlighted_cells_ (which stores pieces_that_can beat previously
 					// and add new info
