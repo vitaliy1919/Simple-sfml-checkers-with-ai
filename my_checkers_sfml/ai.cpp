@@ -19,7 +19,7 @@ std::list<move> Ai::generateAllMoves(int player)
 		{
 			if (cur_player[i].not_beaten)
 			{
-				CheckersPiece cur_piece = cur_player[i].piece;
+				CheckersPiece cur_piece = cur_player[i];
 				list_moves_with_piece cur_beat_moves = getPossibleBeatMoves(cur_piece);
 				if (!cur_beat_moves.empty())
 				{
@@ -35,7 +35,7 @@ std::list<move> Ai::generateAllMoves(int player)
 			{
 				if (cur_player[i].not_beaten)
 				{
-					CheckersPiece cur_piece = cur_player[i].piece;
+					CheckersPiece cur_piece = cur_player[i];
 					std::list<BoardIndex> cur_moves = getPossibleMoves(cur_piece);
 					for (auto possible_move : cur_moves)
 						result.push_back(move(cur_piece.getPosition(), possible_move, i));
@@ -46,9 +46,9 @@ std::list<move> Ai::generateAllMoves(int player)
 	else
 	{
 		CheckersPieceWithState cur_piece = cur_player[iter_piece_beat_multiple_];
-		list_moves_with_piece beat_moves = getPossibleBeatMoves(cur_piece.piece);
+		list_moves_with_piece beat_moves = getPossibleBeatMoves(cur_piece);
 		for (auto beat_move : beat_moves)
-			result.push_back(move(move(cur_piece.piece.getPosition(), beat_move.first, iter_piece_beat_multiple_, beat_move.second)));
+			result.push_back(move(move(cur_piece.getPosition(), beat_move.first, iter_piece_beat_multiple_, beat_move.second)));
 	}
 	return result;
 }
@@ -56,7 +56,7 @@ void Ai::makeMove(int player, move & move_to_make)
 {
 	CheckersPieceWithState *cur_player = getCurrentPlayer(player),
 		*another_player = getAnotherPlayer(player);
-	CheckersPiece &piece_to_move = cur_player[move_to_make.iter_piece_to_move].piece;
+	CheckersPiece &piece_to_move = cur_player[move_to_make.iter_piece_to_move];
 	piece_to_move.setPosition(move_to_make.end_position);
 	board_.movePiece(move_to_make.start_position, move_to_make.end_position);
 
@@ -74,7 +74,7 @@ void Ai::makeMove(int player, move & move_to_make)
 		int iter_beaten_piece = move_to_make.iter_piece_to_beat;
 		CheckersPieceWithState &beaten_piece = another_player[iter_beaten_piece];
 
-		BoardIndex beaten_piece_position = beaten_piece.piece.getPosition();
+		BoardIndex beaten_piece_position = beaten_piece.getPosition();
 		beaten_piece.not_beaten = false;
 		board_.emptyCell(beaten_piece_position);
 	}
@@ -84,7 +84,7 @@ void Ai::unmakeMove(int player, move & move_to_unmake)
 {
 	CheckersPieceWithState *cur_player = getCurrentPlayer(player),
 		*another_player = getAnotherPlayer(player);
-	CheckersPiece &piece_to_unmove = cur_player[move_to_unmake.iter_piece_to_move].piece;
+	CheckersPiece &piece_to_unmove = cur_player[move_to_unmake.iter_piece_to_move];
 	piece_to_unmove.setPosition(move_to_unmake.start_position);
 	board_.movePiece(move_to_unmake.start_position, move_to_unmake.end_position);
 
@@ -98,11 +98,11 @@ void Ai::unmakeMove(int player, move & move_to_unmake)
 	if (move_to_unmake.iter_piece_to_beat != -1)
 	{
 		int iter_beaten_piece = move_to_unmake.iter_piece_to_beat;
-		BoardIndex beaten_piece_position = another_player[iter_beaten_piece].piece.getPosition();
+		BoardIndex beaten_piece_position = another_player[iter_beaten_piece].getPosition();
 		CheckersPieceWithState &beaten_piece = another_player[iter_beaten_piece];
 
 		beaten_piece.not_beaten = true;
-		board_.getPiece(beaten_piece_position) = beaten_piece.piece.getCheckersType();
+		board_.getPiece(beaten_piece_position) = beaten_piece.getCheckersType();
 	}
 }
 
@@ -119,16 +119,16 @@ int Ai::evaluatePlayerPosition(int player) const
 		CheckersPieceWithState cur_piece = cur_player[i];
 		if (cur_piece.not_beaten)
 		{
-			if (cur_piece.piece.isKing())
+			if (cur_piece.isKing())
 				cur_player_evaluation += king_weight * 100;
 			else
 			{
 				cur_player_evaluation += piece_weight * 100;
 				if (player == WHITE_PLAYER)
-					cur_player_evaluation += 5 * cur_piece.piece.getPosition().row;
+					cur_player_evaluation += 5 * cur_piece.getPosition().row;
 				else
-					cur_player_evaluation += 5 * (9 - cur_piece.piece.getPosition().row);
-				cur_player_evaluation += 7 - (2 * cur_piece.piece.getPosition().column - 'a' - 'h');
+					cur_player_evaluation += 5 * (9 - cur_piece.getPosition().row);
+				cur_player_evaluation += 7 - (2 * cur_piece.getPosition().column - 'a' - 'h');
 			}
 		}
 	}
@@ -167,7 +167,7 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 		/*if (cur_move->start_position == BoardIndex('d', 6) && depth == 2)
 			cout << "debug\n";*/
 		makeMove(player, *cur_move);
-		CheckersPiece moven_piece = cur_player[cur_move->iter_piece_to_move].piece;
+		CheckersPiece moven_piece = cur_player[cur_move->iter_piece_to_move];
 		int opponent_result;
 		//list_moves_with_piece debug_moves = getPossibleBeatMoves(moven_piece);
 		if (cur_move->iter_piece_to_beat != -1 && !getPossibleBeatMoves(moven_piece).empty())
@@ -325,7 +325,7 @@ int Ai::checkForPieces(BoardIndex position_to_check, const CheckersPieceWithStat
 	int i = 0;
 	while (i < pieces_size &&
 		!(pieces[i].not_beaten &&
-		pieces[i].piece.getPosition() == position_to_check))
+		pieces[i].getPosition() == position_to_check))
 		i++;
 	if (i >= pieces_size)
 		return -1;
@@ -381,7 +381,7 @@ std::list<move> Ai::findBestMove(int depth)
 			best_move_for_ai_ = cur_position_moves.front();
 		makeMove(ai_player_,best_move_for_ai_);
 		result_moves.push_back(best_move_for_ai_);
-		CheckersPiece piece_to_check_for_multiple_beat = cur_player[best_move_for_ai_.iter_piece_to_move].piece;
+		CheckersPiece piece_to_check_for_multiple_beat = cur_player[best_move_for_ai_.iter_piece_to_move];
 		if (best_move_for_ai_.iter_piece_to_beat != -1 &&
 			!getPossibleBeatMoves(piece_to_check_for_multiple_beat).empty())
 		{
@@ -397,15 +397,4 @@ std::list<move> Ai::findBestMove(int depth)
 	cout << "Time lapsed " <<"(depth = "<<depth<<"): "<< time_lapsed << endl;
 	cout << "Nodes created: " << number_nodes_ << endl;
 	return result_moves;
-}
-
-void fromListToArray(const list_pieces & source, CheckersPieceWithState * dest, int & dest_size)
-{
-	int i = 0;
-	for (auto x : source)
-	{
-		dest[i] = x;
-		++i;
-	}
-	dest_size = i;
 }

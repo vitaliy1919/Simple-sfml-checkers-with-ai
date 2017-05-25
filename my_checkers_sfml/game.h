@@ -13,11 +13,16 @@ inline void appendVector(vector<T>& dest, const vector<T>& source)
 {
 	dest.insert(dest.end(), source.begin(), source.end());
 }
+template <typename T>
+inline void appendVector(vector<T>& dest, const std::list<T>& source)
+{
+	dest.insert(dest.end(), source.begin(), source.end());
+}
 inline void appendVector(vector<BoardIndex>& dest, const CheckersPieceWithState* source)
 {
 	for (int i=0;i<12;i++)
 		if (source[i].not_beaten)
-			dest.push_back(source[i].piece.getPosition());
+			dest.push_back(source[i].getPosition());
 }	
 inline void appendVector(vector<BoardIndex>& dest, const std::list<CheckersPiece>& source)
 {
@@ -26,6 +31,14 @@ inline void appendVector(vector<BoardIndex>& dest, const std::list<CheckersPiece
 		dest.push_back(x.getPosition());
 	}
 }
+inline void appendVector(vector<BoardIndex>& dest, const vector<move_with_piece>& source)
+{
+	for (auto x : source)
+	{
+		dest.push_back(x.first);
+	}
+}
+
 //bool is_in(const list_pieces& pieces, key);
 template <typename T>
 inline typename vector<T>::iterator findInVector(vector<T>& source, T key)
@@ -74,7 +87,7 @@ private:
 	// pieces_that_can_beat_ contains all pieces which can beat
 	bool must_beat_;
 	bool can_beat_many_times_;
-	std::list<CheckersPiece> pieces_that_can_beat_;
+	std::list<BoardIndex> pieces_that_can_beat_;
 
 	// if we click on piece we store this in is_piece_clicked_
 	// and also store pointer to the element in piece_firstly_clicked_

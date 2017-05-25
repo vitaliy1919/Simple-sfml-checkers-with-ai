@@ -173,7 +173,7 @@ istream & operator >> (istream & is, CheckersPiece & piece_to_input)
 int BoardIndex::checkForPieces(const CheckersPieceWithState* pieces) const
 {
 	int i = 0;
-	while (i < 12 && *this == pieces[i].piece.getPosition())
+	while (i < 12 && (!pieces[i].not_beaten || *this != pieces[i].getPosition()))
 		i++;
 	if (i >= 12)
 		return -1;

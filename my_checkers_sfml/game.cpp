@@ -13,7 +13,7 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			white_player_[iter].piece = CheckersPiece(BoardIndex(i, j));
+			white_player_[iter] = CheckersPiece(BoardIndex(i, j), CheckersPiece::WHITE);
 			/*white_player_[iter].setPosition({ i,j });
 			white_player_[iter].setColor(CheckersPiece::WHITE);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::WHITE_PIECE);
@@ -26,7 +26,7 @@ void Game::playersInit()
 		char first = (j % 2 != 0 ? 'a' : 'b');
 		for (char i = first; i <= 'h'; i += 2)
 		{
-			white_player_[iter].piece = CheckersPiece( BoardIndex(i, j), CheckersPiece::BLACK );
+			black_player_[iter] = CheckersPiece( BoardIndex(i, j), CheckersPiece::BLACK );
 			/*black_player_[iter].setPosition({ i,j });
 			black_player_[iter].setColor(CheckersPiece::BLACK);*/
 			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::BLACK_PIECE);
@@ -264,48 +264,47 @@ void Game::processMouseClick(const BoardIndex& click_position)
 				auto piece_which_beat_iter = std::find(
 					pieces_that_can_beat_.begin(),
 					pieces_that_can_beat_.end(),
-					cur_player_[piece_on_position].piece);
+					cur_player_[piece_on_position].getPosition());
 				if (piece_which_beat_iter != pieces_that_can_beat_.end())
 				{
 					// if clicked on right piece - fill info about it
 					is_piece_clicked_ = true;
-					possible_beat_moves_ = cur_player_[piece_on_position].piece.possibleBeatMoves(white_player_, another_player_, board_);
+					possible_beat_moves_ = cur_player_[piece_on_position].possibleBeatMoves(white_player_, another_player_, board_);
 					piece_firstly_clicked_ = piece_on_position;
-					// clear hightlighted_cells_ (which stores pieces_that_can beat previously
+					// clear hightlighted_cells_ (which stores pieces_that_can_beat_ previously)
 					// and add new info
 					hightlighted_cells_.clear();
-					hightlighted_cells_.push_back(cur_player_[piece_on_position].piece.getPosition());
-					for (auto x : possible_beat_moves_)
-						hightlighted_cells_.push_back(x.first);
+					hightlighted_cells_.push_back(cur_player_[piece_on_position].getPosition());
+					appendVector(hightlighted_cells_, possible_beat_moves_);
 				}
 			}
 			else
 			{
 				is_piece_clicked_ = true;
 				piece_firstly_clicked_ = piece_on_position;
-				possible_moves_ = cur_player_[piece_on_position].piece.possibleMoves(cur_player_, another_player_, board_);
-				hightlighted_cells_.push_back(cur_player_[piece_on_position].piece.getPosition());
+				possible_moves_ = cur_player_[piece_on_position].possibleMoves(cur_player_, another_player_, board_);
+				hightlighted_cells_.push_back(cur_player_[piece_on_position].getPosition());
 				appendVector(hightlighted_cells_, possible_moves_);
 			}
 		}
 	}
 }
-void Game::buildPossibleMoves(int clicked_piece_iter)
-{
-	piece_firstly_clicked_ = clicked_piece_iter;
-	possible_beat_moves_ = cur_player_[clicked_piece_iter].piece.possibleBeatMoves(cur_player_, another_player_, board_);
-	if (!possible_beat_moves_.empty())
-	{
-		for (auto x : possible_beat_moves_)
-			hightlighted_cells_.push_back(x.first);
-	}
-	else
-	{
-		possible_moves_ = cur_player_[clicked_piece_iter].piece.possibleMoves(cur_player_, another_player_, board_);
-		for (auto x : possible_moves_)
-			hightlighted_cells_.push_back(x);
-	}
-}
+//void Game::buildPossibleMoves(int clicked_piece_iter)
+//{
+//	piece_firstly_clicked_ = clicked_piece_iter;
+//	possible_beat_moves_ = cur_player_[clicked_piece_iter].piece.possibleBeatMoves(cur_player_, another_player_, board_);
+//	if (!possible_beat_moves_.empty())
+//	{
+//		for (auto x : possible_beat_moves_)
+//			hightlighted_cells_.push_back(x.first);
+//	}
+//	else
+//	{
+//		possible_moves_ = cur_player_[clicked_piece_iter].piece.possibleMoves(cur_player_, another_player_, board_);
+//		for (auto x : possible_moves_)
+//			hightlighted_cells_.push_back(x);
+//	}
+//}
 void Game::moveClickedPiece(const BoardIndex & click_position)
 {
 	bool move_done = false;
@@ -315,7 +314,7 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 	{
 		// if we clicked on piece, not on posible move
 		// should clear info about current clicked piece and choose new
-		// we don't won't do anything if our piece is in the middle of move
+		// we don't wan't do anything if our piece is in the middle of move
 		// (can_beat_many_times_ == true)
 		int previously_clicked_piece = piece_firstly_clicked_;
 		clearInfoForClickedPiece();
@@ -335,18 +334,19 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 		if (i < possible_beat_moves_.size())
 		{
 			last_moves_of_cur_player_.push_back(click_position);			
-			board_.getPiece(piece_firstly_clicked_->getPosition()) = static_cast<int>(CheckersType::EMPTY);
-			board_.emptyCell(cur_player_[piece_firstly_clicked_].piece.getPosition());
-			piece_firstly_clicked_->setPosition(click_position);
+
+			board_.movePiece(cur_player_[piece_firstly_clicked_].getPosition(), click_position);
+
+			cur_player_[piece_firstly_clicked_].setPosition(click_position);
 			
-			board_.getPiece(possible_beat_moves_[i].second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
-			another_player_->erase(possible_beat_moves_[i].second);
+			//board_.getPiece(possible_beat_moves_[i].second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
+			board_.emptyCell(another_player_[possible_beat_moves_[i].second].getPosition());
+			another_player_[possible_beat_moves_[i].second].not_beaten = false;
 
-			board_.getPiece(click_position) = piece_firstly_clicked_->getCheckersType();
 
-			piece_firstly_clicked_->transformIntoKingIfPossible();
+			cur_player_[piece_firstly_clicked_].transformIntoKingIfPossible();
 
-			possible_beat_moves_ = piece_firstly_clicked_->possibleBeatMoves(*cur_player_, *another_player_,board_);
+			possible_beat_moves_ = cur_player_[piece_firstly_clicked_].possibleBeatMoves(cur_player_, another_player_,board_);
 			if (!possible_beat_moves_.empty())
 			{
 				can_beat_many_times_ = true;
@@ -367,12 +367,10 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 		{
 			last_moves_of_cur_player_.push_back(click_position);
 
-			board_.getPiece(piece_firstly_clicked_->getPosition()) = static_cast<int>(CheckersType::EMPTY);
-			piece_firstly_clicked_->setPosition(click_position);
-
-			board_.getPiece(click_position) = piece_firstly_clicked_->getCheckersType();
+			board_.movePiece(cur_player_[piece_firstly_clicked_].getPosition(), click_position);
+			cur_player_[piece_firstly_clicked_].setPosition(click_position);
 			
-			piece_firstly_clicked_->transformIntoKingIfPossible();
+			cur_player_[piece_firstly_clicked_].transformIntoKingIfPossible();
 			//transformIntoKings();
 			move_done = true;
 		}
@@ -382,48 +380,49 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 		last_moves_to_show_.clear();
 		appendVector(last_moves_to_show_, last_moves_of_cur_player_);
 		clearInfoForClickedPiece();
-		checkForWin();
 		changeTurn();
+		checkForWin();
 	}
 }
 void Game::checkForWin()
 {
-	if (white_player_.empty())
+	int white_size = sizeOfPieces(white_player_),
+		black_size = sizeOfPieces(black_player_);
+	if (white_size == 0)
 		game_state_ = static_cast<int>(GameState::BLACK_WINS);
-	else if (black_player_.empty())
+	else if (black_size == 0)
 		game_state_ = static_cast<int>(GameState::WHITE_WINS);
-	else if (!checkPlayerHasMove(white_player_))
+	else if (white_turn_ && !checkPlayerHasMove(white_player_))
 		game_state_ = static_cast<int>(GameState::BLACK_WINS);
-	else if (!checkPlayerHasMove(black_player_))
+	else if (!white_turn_ && !checkPlayerHasMove(black_player_))
 		game_state_ = static_cast<int>(GameState::WHITE_WINS);
 	else
 		game_state_ = static_cast<int>(GameState::RUNNING);
 }
 void Game::makeMove(const move & move_to_make)
 {
-	auto piece_to_move = move_to_make.start_position.checkForPieces(*cur_player_);
-	if (move_to_make.iter_piece_to_beat == -1)
-		piece_to_move->setPosition(move_to_make.end_position);
-	else
+	//int piece_to_move = move_to_make.start_position.checkForPieces(cur_player_);
+	if (move_to_make.iter_piece_to_beat != -1)
 	{
-		vector<move_with_piece> possible_beat_moves_for_piece = piece_to_move->possibleBeatMoves(*cur_player_, *another_player_, board_);
-		auto piece_to_beat = findInVector(possible_beat_moves_for_piece, move_to_make.end_position);
-		board_.emptyCell(piece_to_beat->second->getPosition());
-		another_player_->erase(piece_to_beat->second);
-		piece_to_move->setPosition(move_to_make.end_position);
+		board_.emptyCell(cur_player_[move_to_make.iter_piece_to_beat].getPosition());
+		another_player_[move_to_make.iter_piece_to_beat].not_beaten = false;
 	}
-	piece_to_move->transformIntoKingIfPossible();
+	cur_player_[move_to_make.iter_piece_to_move].setPosition(move_to_make.end_position);
+	cur_player_[move_to_make.iter_piece_to_move].transformIntoKingIfPossible();
 	board_.movePiece(move_to_make.start_position, move_to_make.end_position);
 }
 void Game::checkPiecesForBeating()
 {
 	pieces_that_can_beat_.clear();
-	for (auto x : *cur_player_)
+	for (int i=0;i<12;i++)
 	{
-		if (!(x.possibleBeatMoves(*cur_player_, *another_player_, board_).empty()))
+		if (cur_player_[i].not_beaten)
 		{
-			pieces_that_can_beat_.push_back(x);
-			hightlighted_cells_.push_back(x.getPosition());
+			if (!(cur_player_[i].possibleBeatMoves(cur_player_, another_player_, board_).empty()))
+			{
+				pieces_that_can_beat_.push_back(cur_player_[i].getPosition());
+				hightlighted_cells_.push_back(cur_player_[i].getPosition());
+			}
 		}
 	}
 	if (!pieces_that_can_beat_.empty())
@@ -433,121 +432,12 @@ void Game::checkPiecesForBeating()
 }
 void Game::transformIntoKings()
 {
-	for (auto &x : *cur_player_)
-		if (x.transformIntoKingIfPossible())
-			board_.getPiece(x.getPosition()) = x.getCheckersType();
+	for (int i = 0; i < 12; i++)
+		if (cur_player_[i].not_beaten)
+			if (cur_player_[i].transformIntoKingIfPossible())
+				board_.makeKing(cur_player_[i].getPosition());
 }
 
-void Game::Run()
-{
-	playersInit();
-	checkPiecesForBeating();
-	game_ended_ = false;
-	while (window_.isOpen())
-	{
-		// check all the window's events that were triggered since the last iteration of the loop
-		
-		if (game_state_ == static_cast<int>(GameState::RUNNING) &&
-			!game_ended_ && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
-		{
-			if (!white_turn_ && is_black_ai_)
-				black_ai_.update(white_player_, black_player_, board_);
-			else
-				white_ai_.update(white_player_, black_player_, board_);
-			sf::Clock clock;
-			sf::Time timer = clock.getElapsedTime();
-			std::list<move> best_moves_for_ai;
-			timer = clock.getElapsedTime() - timer;
-			if (!white_turn_ && is_black_ai_)
-				best_moves_for_ai = black_ai_.findBestMove(ai_depth_);
-			else
-				best_moves_for_ai = white_ai_.findBestMove(ai_depth_);
-
-			last_moves_to_show_.clear();
-			
-			if (timer.asMilliseconds() <= 500)
-			{
-				sf::Time wait_time = sf::milliseconds(500) - timer;
-				timer = clock.getElapsedTime();
-				while (clock.getElapsedTime() - timer < wait_time);
-			}
-			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move!=best_moves_for_ai.end();++cur_best_move)
-			{
-				
-				last_moves_to_show_.push_back(cur_best_move->start_position);
-				makeMove(*cur_best_move);
-				redrawPosition();
-				clock.restart();
-				if (best_moves_for_ai.size() != 1)
-					while (clock.getElapsedTime() - timer < sf::milliseconds(500));
-				if (std::next(cur_best_move, 1) == best_moves_for_ai.end())
-					last_moves_to_show_.push_back(cur_best_move->end_position);
-			}
-			checkForWin();
-			changeTurn();
-		}
-		sf::Event event;
-		while (window_.pollEvent(event))
-		{
-			window_for_widgets_.handleEvent(event);
-			// "close requested" event: we close the window
-			if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) || 
-				event.type == sf::Event::Closed)
-				window_.close();
-			if (event.type == sf::Event::Resized)
-			{
-				float aspect_ratio = draw_app_.getAspectRatio();
-				window_.setSize(sf::Vector2u(event.size.width, event.size.width/aspect_ratio));
-				//window_.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
-			}
-			if (event.type == sf::Event::MouseWheelMoved)
-				choose_window_->show();
-
-			if (game_state_ != static_cast<int>(GameState::RUNNING))
-				continue;
-			if (event.type == sf::Event::KeyReleased)
-			{
-				switch (event.key.code)
-				{
-				case sf::Keyboard::S:
-					saveToFile("position.check");
-					break;
-				case sf::Keyboard::R:
-					game_ended_ = false;
-					loadFromFile("position.check");
-					break;
-				case sf::Keyboard::F:
-					for (int i = 0; i < 8; i++)
-					{
-						for (int j = 0; j < 8; j++)
-							cout << board_.checkers_map[i][j] << ' ';
-						cout << endl;
-					}
-					break;
-				}
-
-
-			}
-			if (!game_ended_)
-			{
-				if (event.type == sf::Event::MouseButtonReleased)
-				{
-					BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
-					//std::cout << click_position << endl;
-					processMouseClick(click_position);
-
-				}
-			}
-		}
-		
-		if (!game_ended_ && (game_state_ == static_cast<int>(GameState::BLACK_WINS) || game_state_ == static_cast<int>(GameState::WHITE_WINS)))
-		{
-			cout << (game_state_ == static_cast<int>(GameState::WHITE_WINS) ? "White wins!\n" : "Black wins\n") << endl;
-			game_ended_ = true;
-		}
-		redrawPosition();
-	}
-}
 void Game::setWhiteTurn()
 {
 	white_turn_ = true;
@@ -569,19 +459,25 @@ void Game::loadFromFile(std::string file_name)
 	getline(in, str);
 	str_stream << str;
 	CheckersPiece piece_to_input;
+	int i = 0;
 	while (str_stream)
 	{
 		str_stream >> piece_to_input;
-		white_player_.push_back(piece_to_input);
+		white_player_[i++] = piece_to_input;
 	}
+	for (; i < 12; i++)
+		white_player_[i].not_beaten = false;
 	str_stream.clear();
 	getline(in, str);
 	str_stream << str;
+	i = 0;
 	while (str_stream)
 	{
 		str_stream >> piece_to_input;
-		black_player_.push_back(piece_to_input);
+		black_player_[i++]= piece_to_input;
 	}
+	for (; i < 12; i++)
+		white_player_[i].not_beaten = false;
 	in >> white_turn_;
 	if (white_turn_)
 		setWhiteTurn();
@@ -606,7 +502,8 @@ void Game::saveToFile(std::string file_name)
 void Game::redrawPosition()
 {
 	window_.clear(sf::Color(255, 228, 170, 255));
-	draw_app_.drawStaticElements(white_turn_, hightlighted_cells_, last_moves_to_show_, white_player_.size(), black_player_.size());
+	int white_size = sizeOfPieces(white_player_), black_size = sizeOfPieces(black_player_);
+	draw_app_.drawStaticElements(white_turn_, hightlighted_cells_, last_moves_to_show_, white_size, black_size);
 	int cur_color = (white_turn_ ? CheckersPiece::WHITE : CheckersPiece::BLACK);
 	draw_app_.drawPieces(white_player_,black_player_,game_state_,cur_color);
 	draw_app_.drawWinState(game_state_);
@@ -624,27 +521,27 @@ void Game::redrawPosition()
 
 bool Game::checkPlayerHasMove(const CheckersPieceWithState* player)
 {
-	const_pieces_iterator iter = player.begin();
 	bool cur_has_move = true;
+	int i = 0;
 	do
 	{
 		cur_has_move = true;
-		if (iter->possibleBeatMoves(*cur_player_, *another_player_, board_).empty())
-			if (iter->possibleMoves(*cur_player_, *another_player_, board_).empty())
+		if (player[i].possibleBeatMoves(cur_player_, another_player_, board_).empty())
+			if (player[i].possibleMoves(cur_player_, another_player_, board_).empty())
 				cur_has_move = false;
-		++iter;
-	} while (iter != player.end() && !cur_has_move);
+		++i;
+	} while (i < 12 && !cur_has_move);
 	return cur_has_move;
 }
 
 void Game::clearAllStates()
 {
-	white_player_.clear();
-	black_player_.clear();
+	std::fill(white_player_, white_player_ + 12, CheckersPieceWithState(CheckersPiece(), false));
+	std::fill(black_player_, black_player_ + 12, CheckersPieceWithState(CheckersPiece(), false));
 	is_piece_clicked_ = false;
 	setWhiteTurn();
 	game_state_ = static_cast<int>(GameState::RUNNING);
-	piece_firstly_clicked_ = nullptr;
+	piece_firstly_clicked_ = -1;
 	must_beat_ = false;
 	last_moves_to_show_.clear();
 	board_.clear();
@@ -661,14 +558,16 @@ Game::Game(int game_mode, int ai_level) :
 	possible_moves_(),
 	is_piece_clicked_(false),
 	piece_firstly_clicked_(),
-	cur_player_(&white_player_),
-	another_player_(&black_player_),
+	cur_player_(white_player_),
+	another_player_(black_player_),
 	pieces_that_can_beat_(),
 	must_beat_(false),
 	game_state_(static_cast<int>(GameState::NOT_RUNNING)),
 	can_beat_many_times_(false),
 	ai_depth_(ai_level),
-	draw_app_(window_)
+	draw_app_(window_),
+	white_ai_(Ai::WHITE_PLAYER),
+	black_ai_(Ai::BLACK_PLAYER)
 {
 	draw_app_.setSizesAccordingToScreenResolution();
 	window_for_widgets_.setWindow(window_);
@@ -682,6 +581,110 @@ Game::Game(int game_mode, int ai_level) :
 		is_white_ai_ = true;
 	if (game_mode == BLACK_AI || game_mode == TWO_AI)
 		is_black_ai_ = true;
-	black_ai_ = Ai(white_player_, black_player_, board_, Ai::BLACK_PLAYER);
-	white_ai_ = Ai(white_player_, black_player_, board_, Ai::WHITE_PLAYER);
+}
+
+void Game::Run()
+{
+	playersInit();
+	checkPiecesForBeating();
+	game_ended_ = false;
+	while (window_.isOpen())
+	{
+		
+
+		if (game_state_ == static_cast<int>(GameState::RUNNING) &&
+			!game_ended_ && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
+		{
+			if (!white_turn_ && is_black_ai_)
+				black_ai_.update(white_player_, black_player_, board_);
+			else
+				white_ai_.update(white_player_, black_player_, board_);
+			sf::Clock clock;
+			sf::Time timer = clock.getElapsedTime();
+			std::list<move> best_moves_for_ai;
+			timer = clock.getElapsedTime() - timer;
+			if (!white_turn_ && is_black_ai_)
+				best_moves_for_ai = black_ai_.findBestMove(ai_depth_);
+			else
+				best_moves_for_ai = white_ai_.findBestMove(ai_depth_);
+
+			last_moves_to_show_.clear();
+
+			if (timer.asMilliseconds() <= 500)
+			{
+				sf::Time wait_time = sf::milliseconds(500) - timer;
+				timer = clock.getElapsedTime();
+				while (clock.getElapsedTime() - timer < wait_time);
+			}
+			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move != best_moves_for_ai.end(); ++cur_best_move)
+			{
+
+				last_moves_to_show_.push_back(cur_best_move->start_position);
+				makeMove(*cur_best_move);
+				redrawPosition();
+				clock.restart();
+				if (best_moves_for_ai.size() != 1)
+					while (clock.getElapsedTime() - timer < sf::milliseconds(500));
+				if (std::next(cur_best_move, 1) == best_moves_for_ai.end())
+					last_moves_to_show_.push_back(cur_best_move->end_position);
+			}
+			checkForWin();
+			changeTurn();
+		}
+		sf::Event event;
+		while (window_.pollEvent(event))
+		{
+			window_for_widgets_.handleEvent(event);
+			if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) ||
+				event.type == sf::Event::Closed)
+				window_.close();
+			if (event.type == sf::Event::Resized)
+			{
+				float aspect_ratio = draw_app_.getAspectRatio();
+				window_.setSize(sf::Vector2u(event.size.width, event.size.width / aspect_ratio));
+				//window_.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
+			}
+			if (game_state_ != static_cast<int>(GameState::RUNNING))
+				continue;
+			if (event.type == sf::Event::KeyReleased)
+			{
+				switch (event.key.code)
+				{
+				case sf::Keyboard::S:
+					saveToFile("position.check");
+					break;
+				case sf::Keyboard::R:
+					game_ended_ = false;
+					loadFromFile("position.check");
+					break;
+				case sf::Keyboard::F:
+					for (int i = 0; i < 8; i++)
+					{
+						for (int j = 0; j < 8; j++)
+							cout << board_.checkers_map[i][j] << ' ';
+						cout << endl;
+					}
+					break;
+				}
+
+			}
+			if (!game_ended_)
+			{
+				if (event.type == sf::Event::MouseButtonReleased)
+				{
+					BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
+					//std::cout << click_position << endl;
+					processMouseClick(click_position);
+
+				}
+			}
+		}
+
+		if (!game_ended_ && (game_state_ == static_cast<int>(GameState::BLACK_WINS) || game_state_ == static_cast<int>(GameState::WHITE_WINS)))
+		{
+			cout << (game_state_ == static_cast<int>(GameState::WHITE_WINS) ? "White wins!\n" : "Black wins\n") << endl;
+			game_ended_ = true;
+		}
+		redrawPosition();
+	}
 }

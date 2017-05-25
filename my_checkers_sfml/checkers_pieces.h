@@ -14,7 +14,7 @@ using std::cout;
 
 
 class CheckersPiece;
-struct CheckersPieceWithState;
+class CheckersPieceWithState;
 struct BoardIndex;
 struct Board;
 
@@ -164,9 +164,9 @@ public:
 	friend istream& operator>>(istream& is, CheckersPiece& piece_to_input);
 };
 
-struct CheckersPieceWithState
+class CheckersPieceWithState:public CheckersPiece
 {
-	CheckersPiece piece;
+public:
 	bool not_beaten;
-	CheckersPieceWithState(const CheckersPiece& ch_piece = CheckersPiece(), bool n_beaten = true) :piece(ch_piece), not_beaten(n_beaten) {}
+	CheckersPieceWithState(const CheckersPiece& ch_piece = CheckersPiece(), bool n_beaten = true):CheckersPiece(ch_piece), not_beaten(n_beaten) {}
 };

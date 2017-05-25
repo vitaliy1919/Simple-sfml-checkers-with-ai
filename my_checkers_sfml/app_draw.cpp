@@ -79,13 +79,11 @@ void DrawAppInstance::drawTurn( bool white_turn)
 	window_->draw(turn_rectangle);
 }
 
-void DrawAppInstance::drawPlayersPieces(const list_pieces & player, int game_state, int turn)
+void DrawAppInstance::drawPlayersPieces(const CheckersPieceWithState * player, int game_state, int turn)
 {
 	sf::Sprite piece;
 	const sf::Texture *piece_texture, *piece_king_texture;
-	if (player.empty())
-		return;
-	int color = player.front().getColor();
+	int color = player[0].getColor();
 	if (color == CheckersPiece::WHITE)
 	{
 		piece_texture = &white_piece_texture_;
@@ -96,35 +94,38 @@ void DrawAppInstance::drawPlayersPieces(const list_pieces & player, int game_sta
 		piece_texture = &black_piece_texture_;
 		piece_king_texture = &black_king_texture_;
 	}
-	for (auto players_piece : player)
+	for (int i = 0; i<12;i++)
 	{
-		if (players_piece.isKing())
+		if (player[i].not_beaten)
 		{
-			piece.setTexture(*piece_king_texture, true);
-			piece.setScale(sf::Vector2f(
-				cell_size_ / (1.2*piece_king_texture->getSize().x),
-				cell_size_ / (1.2* piece_king_texture->getSize().y)));
+			if (player[i].isKing())
+			{
+				piece.setTexture(*piece_king_texture, true);
+				piece.setScale(sf::Vector2f(
+					cell_size_ / (1.2*piece_king_texture->getSize().x),
+					cell_size_ / (1.2* piece_king_texture->getSize().y)));
 
-		}
-		else
-		{
-			piece.setTexture(*piece_texture, true);
-			piece.setScale(sf::Vector2f(
-				cell_size_ / (1.2*piece_texture->getSize().x),
-				cell_size_ / (1.2* piece_texture->getSize().y)));
-		}
-		if (game_state == static_cast<int>(GameState::NOT_RUNNING))
-			piece.setColor(sf::Color(255, 255, 255, 64));
-		else if (game_state == static_cast<int>(GameState::RUNNING) && color != turn)
-			piece.setColor(sf::Color(255, 255, 255, 150));
+			}
+			else
+			{
+				piece.setTexture(*piece_texture, true);
+				piece.setScale(sf::Vector2f(
+					cell_size_ / (1.2*piece_texture->getSize().x),
+					cell_size_ / (1.2* piece_texture->getSize().y)));
+			}
+			if (game_state == static_cast<int>(GameState::NOT_RUNNING))
+				piece.setColor(sf::Color(255, 255, 255, 64));
+			else if (game_state == static_cast<int>(GameState::RUNNING) && color != turn)
+				piece.setColor(sf::Color(255, 255, 255, 150));
 
-		sf::Vector2f piece_position = getRealPosition(players_piece.getPosition());
-		sf::FloatRect piece_bounds = piece.getGlobalBounds();
-		piece.setPosition(piece_position);
-		piece.move(sf::Vector2f(
-			(cell_size_ - piece_bounds.width) / 2,
-			(cell_size_ - piece_bounds.height) / 2));
-		window_->draw(piece);
+			sf::Vector2f piece_position = getRealPosition(player[i].getPosition());
+			sf::FloatRect piece_bounds = piece.getGlobalBounds();
+			piece.setPosition(piece_position);
+			piece.move(sf::Vector2f(
+				(cell_size_ - piece_bounds.width) / 2,
+				(cell_size_ - piece_bounds.height) / 2));
+			window_->draw(piece);
+		}
 	}
 }
 
@@ -251,18 +252,18 @@ void DrawAppInstance::drawBeatenPieces(int white_player_size, int black_player_s
 	}
 }
 
-void DrawAppInstance::highlightCells(const vector<BoardIndex>& cells_to_highlight, sf::Color color)
+void DrawAppInstance::highlightCells(const vector<BoardIndex>& cells_to_highlight, sf::Color color, float thickness)
 {
-	float kThickness = 0.08*cell_size_;
-	sf::RectangleShape cell(sf::Vector2f(cell_size_ - kThickness * 2, cell_size_ - kThickness * 2));
+	
+	sf::RectangleShape cell(sf::Vector2f(cell_size_ - thickness * 2, cell_size_ - thickness * 2));
 	for (auto x : cells_to_highlight)
 	{
 
 		sf::Vector2f cell_position = getRealPosition(x);
-		cell.setPosition(sf::Vector2f(cell_position.x + kThickness, cell_position.y + kThickness));
+		cell.setPosition(sf::Vector2f(cell_position.x + thickness, cell_position.y + thickness));
 		cell.setFillColor(sf::Color(0, 0, 0, 0));
 		cell.setOutlineColor(color);
-		cell.setOutlineThickness(kThickness);
+		cell.setOutlineThickness(thickness);
 		window_->draw(cell);
 	}
 }
@@ -274,8 +275,9 @@ void DrawAppInstance::drawStaticElements(bool is_white_move,
 	int black_size_)
 {
 	drawBoard();
-	highlightCells(last_moves, sf::Color(118, 255, 3, 255));
-	highlightCells(higlighted, sf::Color(255, 193, 7, 255));
+	float kThickness = 0.08*cell_size_;
+	highlightCells(last_moves, sf::Color(118, 255, 3, 255),kThickness/1.5);
+	highlightCells(higlighted, sf::Color(255, 193, 7, 255),kThickness);
 	drawTurn(is_white_move);
 	drawBeatenPieces(white_size_,black_size_);
 	/*sf::Texture trasparent_image;
@@ -292,7 +294,7 @@ void DrawAppInstance::setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::But
 	move_button->setPosition(kLeftMargin + unmove_button->getSize().x+kObjectMargin, kTopMargin + board_size_ + kObjectMargin);
 }
 
-void DrawAppInstance::drawPieces(const list_pieces & white_player, const list_pieces & black_pieces, int game_state, int turn)
+void DrawAppInstance::drawPieces(const CheckersPieceWithState * white_player, const CheckersPieceWithState * black_pieces, int game_state, int turn)
 {
 	drawPlayersPieces(white_player, game_state, turn);
 	drawPlayersPieces(black_pieces, game_state, turn);

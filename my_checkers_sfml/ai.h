@@ -18,14 +18,14 @@ struct move
 		became_king(king)
 	{}
 };
-struct CheckersPieceWithState
+template <typename T>
+inline void copyArray(T* dest, const T* source,int size)
 {
-	CheckersPiece piece;
-	bool not_beaten;
-	CheckersPieceWithState(const CheckersPiece& ch_piece = CheckersPiece(), bool n_beaten = true) :piece(ch_piece), not_beaten(n_beaten) {}
-};
-void fromListToArray(const list_pieces& source, CheckersPieceWithState *dest, int& dest_size);
-typedef std::list<pair<BoardIndex, int>> list_moves_with_piece;
+	for (int i = 0; i < size; i++)
+		dest[i] = source[i];
+}
+
+typedef std::list<move_with_piece> list_moves_with_piece;
 class Ai
 {
 private:
@@ -79,17 +79,15 @@ private:
 	int getAnotherPlayerSize(int player) const;
 public: 
 	enum { WHITE_PLAYER, BLACK_PLAYER };
-	Ai(const list_pieces& white = list_pieces(), const list_pieces& black = list_pieces(), const Board& b = Board(), int color = 0) :
-		ai_player_(color) ,iter_piece_beat_multiple_(-1),
-		board_(b),number_nodes_(0)
+	Ai(int color = WHITE_PLAYER) : white_player_(), black_player_(),
+		ai_player_() ,iter_piece_beat_multiple_(-1),
+		board_(),number_nodes_(0)
 	{
-		fromListToArray(white, white_player_, white_player_size_);
-		fromListToArray(black, black_player_, black_player_size_);
 	}
-	void update(const list_pieces& white, const list_pieces& black, const Board& b)
+	void update(const CheckersPieceWithState* white, const CheckersPieceWithState* black, const Board& b)
 	{
-		fromListToArray(white, white_player_, white_player_size_);
-		fromListToArray(black, black_player_, black_player_size_);
+		copyArray(white_player_, white, 12);
+		copyArray(black_player_, black, 12);
 		board_ = b;
 	}
 	std::list<move> findBestMove(int depth);

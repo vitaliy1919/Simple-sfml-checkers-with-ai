@@ -31,7 +31,7 @@ class DrawAppInstance
 	sf::Texture white_king_texture_;
 	sf::Texture black_king_texture_;
 	sf::Font text_font_;
-	void drawPlayersPieces(const list_pieces& player,int game_state,int turn);
+	void drawPlayersPieces(const CheckersPieceWithState* player,int game_state,int turn);
 public:
 	// this function return real position on board_ by BoardIndex 
 	DrawAppInstance(sf::RenderWindow& wind);
@@ -55,14 +55,14 @@ public:
 
 	void setMenuPosition(tgui::MenuBar::Ptr main_menu);
 
-	void highlightCells(const vector<BoardIndex>& cells_to_highlight, sf::Color color);
+	void highlightCells(const vector<BoardIndex>& cells_to_highlight, sf::Color color, float thickness);
 	void drawStaticElements(bool is_white_move,
 		const vector<BoardIndex>& higlighted, 
 		const vector<BoardIndex>& last_move,
 		int white_size_,
 		int black_size_);
 	void setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button);
-	void drawPieces(const list_pieces& white_player, const list_pieces& black_pieces, int game_state, int turn);
+	void drawPieces(const CheckersPieceWithState * white_player, const CheckersPieceWithState * black_pieces, int game_state, int turn);
 	void drawWinState(int game_state);
 };
 
