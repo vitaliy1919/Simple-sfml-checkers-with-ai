@@ -242,7 +242,7 @@ void Game::changeTurn()
 void Game::clearInfoForClickedPiece()
 {
 	is_piece_clicked_ = false;
-	piece_firstly_clicked_ = nullptr;
+	piece_firstly_clicked_ = -1;
 	last_moves_of_cur_player_.clear();
 	hightlighted_cells_.clear();
 	possible_beat_moves_.clear();
@@ -269,12 +269,12 @@ void Game::processMouseClick(const BoardIndex& click_position)
 				{
 					// if clicked on right piece - fill info about it
 					is_piece_clicked_ = true;
-					possible_beat_moves_ = cur_piece_on_position->possibleBeatMoves(*cur_player_, *another_player_, board_);
-					piece_firstly_clicked_ = &(*piece_on_position);
+					possible_beat_moves_ = cur_player_[piece_on_position].piece.possibleBeatMoves(white_player_, another_player_, board_);
+					piece_firstly_clicked_ = piece_on_position;
 					// clear hightlighted_cells_ (which stores pieces_that_can beat previously
 					// and add new info
 					hightlighted_cells_.clear();
-					hightlighted_cells_.push_back(piece_on_position->getPosition());
+					hightlighted_cells_.push_back(cur_player_[piece_on_position].piece.getPosition());
 					for (auto x : possible_beat_moves_)
 						hightlighted_cells_.push_back(x.first);
 				}
@@ -282,18 +282,18 @@ void Game::processMouseClick(const BoardIndex& click_position)
 			else
 			{
 				is_piece_clicked_ = true;
-				piece_firstly_clicked_ = &(*piece_on_position);
-				possible_moves_ = piece_on_position->possibleMoves(*cur_player_, *another_player_, board_);
-				hightlighted_cells_.push_back(piece_on_position->getPosition());
+				piece_firstly_clicked_ = piece_on_position;
+				possible_moves_ = cur_player_[piece_on_position].piece.possibleMoves(cur_player_, another_player_, board_);
+				hightlighted_cells_.push_back(cur_player_[piece_on_position].piece.getPosition());
 				appendVector(hightlighted_cells_, possible_moves_);
 			}
 		}
 	}
 }
-void Game::buildPossibleMoves(CheckersPiece& clicked_piece)
+void Game::buildPossibleMoves(int clicked_piece_iter)
 {
-	piece_firstly_clicked_ = &clicked_piece;
-	possible_beat_moves_ = clicked_piece.possibleBeatMoves(*cur_player_, *another_player_, board_);
+	piece_firstly_clicked_ = clicked_piece_iter;
+	possible_beat_moves_ = cur_player_[clicked_piece_iter].piece.possibleBeatMoves(cur_player_, another_player_, board_);
 	if (!possible_beat_moves_.empty())
 	{
 		for (auto x : possible_beat_moves_)
@@ -301,7 +301,7 @@ void Game::buildPossibleMoves(CheckersPiece& clicked_piece)
 	}
 	else
 	{
-		possible_moves_ = clicked_piece.possibleMoves(*cur_player_, *another_player_, board_);
+		possible_moves_ = cur_player_[clicked_piece_iter].piece.possibleMoves(cur_player_, another_player_, board_);
 		for (auto x : possible_moves_)
 			hightlighted_cells_.push_back(x);
 	}
@@ -309,19 +309,19 @@ void Game::buildPossibleMoves(CheckersPiece& clicked_piece)
 void Game::moveClickedPiece(const BoardIndex & click_position)
 {
 	bool move_done = false;
-	pieces_iterator clicked_piece_player_iter = click_position.checkForPieces(*cur_player_);
+	int clicked_piece_player_iter = click_position.checkForPieces(cur_player_);
 
-	if (!can_beat_many_times_ && clicked_piece_player_iter != cur_player_->end())
+	if (!can_beat_many_times_ && clicked_piece_player_iter != -1)
 	{
 		// if we clicked on piece, not on posible move
 		// should clear info about current clicked piece and choose new
 		// we don't won't do anything if our piece is in the middle of move
 		// (can_beat_many_times_ == true)
-		CheckersPiece *previously_clicked_piece = piece_firstly_clicked_;
+		int previously_clicked_piece = piece_firstly_clicked_;
 		clearInfoForClickedPiece();
 		appendVector(hightlighted_cells_, pieces_that_can_beat_); 
 		// if we clicked on other piece - make move for it
-		if (*clicked_piece_player_iter != *previously_clicked_piece)
+		if (clicked_piece_player_iter != previously_clicked_piece)
 			processMouseClick(click_position);
 	}
 
@@ -336,7 +336,7 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 		{
 			last_moves_of_cur_player_.push_back(click_position);			
 			board_.getPiece(piece_firstly_clicked_->getPosition()) = static_cast<int>(CheckersType::EMPTY);
-
+			board_.emptyCell(cur_player_[piece_firstly_clicked_].piece.getPosition());
 			piece_firstly_clicked_->setPosition(click_position);
 			
 			board_.getPiece(possible_beat_moves_[i].second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
@@ -551,14 +551,14 @@ void Game::Run()
 void Game::setWhiteTurn()
 {
 	white_turn_ = true;
-	cur_player_ = &white_player_;
-	another_player_ = &black_player_;
+	cur_player_ = white_player_;
+	another_player_ = black_player_;
 }
 void Game::setBlackTurn()
 {
 	white_turn_ = false;
-	cur_player_ = &black_player_;
-	another_player_ = &white_player_;
+	cur_player_ = black_player_;
+	another_player_ = white_player_;
 }
 void Game::loadFromFile(std::string file_name)
 {
@@ -622,7 +622,7 @@ void Game::redrawPosition()
 	window_.display();
 }
 
-bool Game::checkPlayerHasMove(const list_pieces & player)
+bool Game::checkPlayerHasMove(const CheckersPieceWithState* player)
 {
 	const_pieces_iterator iter = player.begin();
 	bool cur_has_move = true;

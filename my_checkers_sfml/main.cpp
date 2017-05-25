@@ -4,6 +4,7 @@
 
 #include "Game.h"
 #include "app_draw.h"
+#include "checkers_pieces.h"
 int getNumber(int min, int max)
 {
 	int res;
@@ -67,7 +68,6 @@ void consoleGui()
 }
 int main()
 {
-	
 	Game checkers;
 	checkers.Run();
 	//sf::RenderWindow window;

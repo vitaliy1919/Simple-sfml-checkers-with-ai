@@ -19,6 +19,13 @@ inline void appendVector(vector<BoardIndex>& dest, const CheckersPieceWithState*
 		if (source[i].not_beaten)
 			dest.push_back(source[i].piece.getPosition());
 }	
+inline void appendVector(vector<BoardIndex>& dest, const std::list<CheckersPiece>& source)
+{
+	for (auto x : source)
+	{
+		dest.push_back(x.getPosition());
+	}
+}
 //bool is_in(const list_pieces& pieces, key);
 template <typename T>
 inline typename vector<T>::iterator findInVector(vector<T>& source, T key)
@@ -129,7 +136,7 @@ private:
 
 	// build all possible position for given CheckersPiece
 	// if piece can beat, possible_moves_ will be empty
-	void buildPossibleMoves(CheckersPiece& clicked_piece);
+	void buildPossibleMoves(int clicked_piece_iter);
 
 	// move clicked piece to BoardIndex if possible 
 	void moveClickedPiece(const BoardIndex& click_position);
