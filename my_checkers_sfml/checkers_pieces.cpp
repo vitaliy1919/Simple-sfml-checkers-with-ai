@@ -6,7 +6,7 @@
 void CheckersPiece::addPossibleMoveBeat(
 	BoardIndex(BoardIndex::*pf)() const,
 	const CheckersPieceWithState* player_pieces, 
-	const CheckersPieceWithState* opponent_pieces, Board& board,
+	const CheckersPieceWithState* opponent_pieces, const Board& board,
 	vector<move_with_piece>& possible_moves) const
 {
 	BoardIndex position_to_check = (position_.*pf)();
@@ -45,7 +45,7 @@ void CheckersPiece::addPossibleMoveBeat(
 }
 vector<move_with_piece> CheckersPiece::possibleBeatMoves(
 	const CheckersPieceWithState* player_pieces, 
-	const CheckersPieceWithState* opponent_pieces, Board& board) const
+	const CheckersPieceWithState* opponent_pieces, const Board& board) const
 {
 	vector<move_with_piece> possible_moves;
 	addPossibleMoveBeat(&BoardIndex::upperLeft, player_pieces, opponent_pieces, board, possible_moves);
@@ -56,7 +56,7 @@ vector<move_with_piece> CheckersPiece::possibleBeatMoves(
 }
 void CheckersPiece::addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
 	const CheckersPieceWithState* player_pieces, 
-	const CheckersPieceWithState* opponent_pieces, Board& board,
+	const CheckersPieceWithState* opponent_pieces, const Board& board,
 	vector<BoardIndex>& possible_moves) const
 {
 	BoardIndex position_to_check = (position_.*pf)();
@@ -80,7 +80,7 @@ void CheckersPiece::addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
 }
 vector<BoardIndex> CheckersPiece::possibleMoves(
 	const CheckersPieceWithState* player_pieces,
-	const CheckersPieceWithState* opponent_pieces,Board &board) const
+	const CheckersPieceWithState* opponent_pieces, const Board &board) const
 {
 	vector<BoardIndex> possible_moves;
 	if (!is_king_)

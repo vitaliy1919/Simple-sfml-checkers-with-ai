@@ -404,7 +404,7 @@ void Game::makeMove(const move & move_to_make)
 	//int piece_to_move = move_to_make.start_position.checkForPieces(cur_player_);
 	if (move_to_make.iter_piece_to_beat != -1)
 	{
-		board_.emptyCell(cur_player_[move_to_make.iter_piece_to_beat].getPosition());
+		board_.emptyCell(another_player_[move_to_make.iter_piece_to_beat].getPosition());
 		another_player_[move_to_make.iter_piece_to_beat].not_beaten = false;
 	}
 	cur_player_[move_to_make.iter_piece_to_move].setPosition(move_to_make.end_position);
@@ -590,8 +590,7 @@ void Game::Run()
 	game_ended_ = false;
 	while (window_.isOpen())
 	{
-		
-
+	
 		if (game_state_ == static_cast<int>(GameState::RUNNING) &&
 			!game_ended_ && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
 		{

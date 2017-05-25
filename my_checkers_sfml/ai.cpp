@@ -20,7 +20,7 @@ std::list<move> Ai::generateAllMoves(int player)
 			if (cur_player[i].not_beaten)
 			{
 				CheckersPiece cur_piece = cur_player[i];
-				list_moves_with_piece cur_beat_moves = getPossibleBeatMoves(cur_piece);
+				vector<move_with_piece> cur_beat_moves = getPossibleBeatMoves(cur_piece);
 				if (!cur_beat_moves.empty())
 				{
 					for (auto beat_move : cur_beat_moves)
@@ -36,7 +36,7 @@ std::list<move> Ai::generateAllMoves(int player)
 				if (cur_player[i].not_beaten)
 				{
 					CheckersPiece cur_piece = cur_player[i];
-					std::list<BoardIndex> cur_moves = getPossibleMoves(cur_piece);
+					vector<BoardIndex> cur_moves = getPossibleMoves(cur_piece);
 					for (auto possible_move : cur_moves)
 						result.push_back(move(cur_piece.getPosition(), possible_move, i));
 				}
@@ -46,7 +46,7 @@ std::list<move> Ai::generateAllMoves(int player)
 	else
 	{
 		CheckersPieceWithState cur_piece = cur_player[iter_piece_beat_multiple_];
-		list_moves_with_piece beat_moves = getPossibleBeatMoves(cur_piece);
+		vector<move_with_piece> beat_moves = getPossibleBeatMoves(cur_piece);
 		for (auto beat_move : beat_moves)
 			result.push_back(move(move(cur_piece.getPosition(), beat_move.first, iter_piece_beat_multiple_, beat_move.second)));
 	}
@@ -221,103 +221,25 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 	return score;
 }
 
-void Ai::addPossibleMove(const CheckersPiece& piece_to_check, BoardIndex(BoardIndex::* pf)() const, std::list<BoardIndex> & possible_moves) const
+
+vector<BoardIndex> Ai::getPossibleMoves(const CheckersPiece& piece_to_check) const
 {
-	BoardIndex position_to_check = (piece_to_check.getPosition().*pf)();
-	if (!piece_to_check.isKing())
-	{
-		if (position_to_check.isInBoard())
-		{
-			if (!position_to_check.checkForPiecesBool(board_))
-				possible_moves.push_back(position_to_check);
-		}
-	}
+	int player;
+	if (piece_to_check.getColor() == CheckersPiece::WHITE)
+		player = Ai::WHITE_PLAYER;
 	else
-	{
-		while (position_to_check.isInBoard() &&
-			!position_to_check.checkForPiecesBool(board_))
-		{
-			possible_moves.push_back(position_to_check);
-			position_to_check = (position_to_check.*pf)();
-		}
-	}
+		player = Ai::BLACK_PLAYER;
+	return piece_to_check.possibleMoves(getCurrentPlayer(player), getAnotherPlayer(player), board_);
 }
 
-void Ai::addPossibleMoveBeat(const CheckersPiece & piece_to_check, BoardIndex(BoardIndex::* pf)() const, list_moves_with_piece & possible_moves) const
+vector<move_with_piece> Ai::getPossibleBeatMoves(const CheckersPiece& piece_to_check) const
 {
-	int color_cur_player = piece_to_check.getColor();
-	int player = (color_cur_player == CheckersPiece::WHITE ? WHITE_PLAYER : BLACK_PLAYER);
-	const CheckersPieceWithState *player_pieces = getCurrentPlayer(player),
-		*opponent_pieces = getAnotherPlayer(player);
-	int player_size = getCurrentPlayerSize(player), opponent_size = getAnotherPlayerSize(player);
-	BoardIndex position_to_check = (piece_to_check.getPosition().*pf)();
-	if (!piece_to_check.isKing())
-	{
-		if (position_to_check.isInBoard())
-		{
-			int piece_to_beat_iter = checkForPieces(position_to_check, opponent_pieces, opponent_size);
-			position_to_check = (position_to_check.*pf)();
-			if (piece_to_beat_iter != -1 && position_to_check.isInBoard() &&
-				!position_to_check.checkForPiecesBool(board_))
-			{
-				possible_moves.push_back({ position_to_check,piece_to_beat_iter });
-			}
-		}
-	}
+	int player;
+	if (piece_to_check.getColor() == CheckersPiece::WHITE)
+		player = Ai::WHITE_PLAYER;
 	else
-	{
-		while (position_to_check.isInBoard() &&
-			!position_to_check.checkForPiecesBool(board_))
-			position_to_check = (position_to_check.*pf)();
-		if (position_to_check.isInBoard() &&
-			position_to_check.checkForPieces(board_) != color_cur_player)
-		{
-			int piece_to_beat_iter = checkForPieces(position_to_check,opponent_pieces,opponent_size);
-			position_to_check = (position_to_check.*pf)();
-			while (position_to_check.isInBoard() &&
-				!position_to_check.checkForPiecesBool(board_))
-			{
-				possible_moves.push_back({ position_to_check,piece_to_beat_iter });
-				position_to_check = (position_to_check.*pf)();
-			}
-		}
-	}
-}
-
-std::list<BoardIndex> Ai::getPossibleMoves(const CheckersPiece& piece_to_check)
-{
-	std::list<BoardIndex> possible_moves;
-	if (!piece_to_check.isKing())
-	{
-		if (piece_to_check.getColor() == CheckersPiece::WHITE)
-		{
-			addPossibleMove(piece_to_check,&BoardIndex::upperLeft, possible_moves);
-			addPossibleMove(piece_to_check, &BoardIndex::upperRight, possible_moves);
-		}
-		else
-		{
-			addPossibleMove(piece_to_check, &BoardIndex::bottomLeft, possible_moves);
-			addPossibleMove(piece_to_check, &BoardIndex::bottomRight, possible_moves);
-		}
-	}
-	else
-	{
-		addPossibleMove(piece_to_check, &BoardIndex::upperLeft, possible_moves);
-		addPossibleMove(piece_to_check, &BoardIndex::upperRight, possible_moves);
-		addPossibleMove(piece_to_check, &BoardIndex::bottomLeft, possible_moves);
-		addPossibleMove(piece_to_check, &BoardIndex::bottomRight, possible_moves);
-	}
-	return possible_moves;
-}
-
-list_moves_with_piece Ai::getPossibleBeatMoves(const CheckersPiece & piece_to_check) const
-{
-	list_moves_with_piece possible_moves;
-	addPossibleMoveBeat(piece_to_check, &BoardIndex::upperLeft, possible_moves);
-	addPossibleMoveBeat(piece_to_check, &BoardIndex::upperRight, possible_moves);
-	addPossibleMoveBeat(piece_to_check, &BoardIndex::bottomLeft, possible_moves);
-	addPossibleMoveBeat(piece_to_check, &BoardIndex::bottomRight, possible_moves);
-	return possible_moves;
+		player = Ai::BLACK_PLAYER;
+	return piece_to_check.possibleBeatMoves(getCurrentPlayer(player), getAnotherPlayer(player), board_);
 }
 
 int Ai::checkForPieces(BoardIndex position_to_check, const CheckersPieceWithState * pieces, int pieces_size) const

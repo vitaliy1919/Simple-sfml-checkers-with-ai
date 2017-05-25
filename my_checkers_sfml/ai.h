@@ -55,19 +55,11 @@ private:
 	int evaluatePosition() const;
 
 	int alphaBeta(int color, int depth, int max_white = INT_MIN, int min_black = INT_MAX);
-	void addPossibleMove(
-		const CheckersPiece& piece_to_check,
-		BoardIndex(BoardIndex::*pf)() const,
-		std::list<BoardIndex>& possible_moves) const;
+	
 
-	void addPossibleMoveBeat(
-		const CheckersPiece& piece_to_check,
-		BoardIndex(BoardIndex::*pf)() const,
-		list_moves_with_piece& possible_moves) const;
+	vector<BoardIndex> getPossibleMoves(const CheckersPiece& piece_to_check) const;
 
-	std::list<BoardIndex> getPossibleMoves(const CheckersPiece& piece_to_check);
-
-	list_moves_with_piece getPossibleBeatMoves(const CheckersPiece& piece_to_check) const;
+	vector<move_with_piece> getPossibleBeatMoves(const CheckersPiece& piece_to_check) const;
 
 	int checkForPieces(BoardIndex position_to_check, const CheckersPieceWithState *pieces, int pieces_size) const;
 
@@ -80,7 +72,7 @@ private:
 public: 
 	enum { WHITE_PLAYER, BLACK_PLAYER };
 	Ai(int color = WHITE_PLAYER) : white_player_(), black_player_(),
-		ai_player_() ,iter_piece_beat_multiple_(-1),
+		ai_player_(color) ,iter_piece_beat_multiple_(-1),
 		board_(),number_nodes_(0)
 	{
 	}
@@ -88,6 +80,8 @@ public:
 	{
 		copyArray(white_player_, white, 12);
 		copyArray(black_player_, black, 12);
+		white_player_size_ = 12;
+		black_player_size_ = 12;
 		board_ = b;
 	}
 	std::list<move> findBestMove(int depth);

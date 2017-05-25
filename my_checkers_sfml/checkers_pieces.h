@@ -113,7 +113,7 @@ private:
 	void addPossibleMoveBeat(
 		BoardIndex(BoardIndex::*pf)() const,
 		const CheckersPieceWithState* player_pieces, 
-		const CheckersPieceWithState* opponent_pieces, Board& board,
+		const CheckersPieceWithState* opponent_pieces, const Board& board,
 		vector<move_with_piece>& possible_moves) const;
 
 	//the same, but generate possible moves
@@ -121,7 +121,7 @@ private:
 
 	void addPossibleMove(BoardIndex(BoardIndex::*pf)() const,
 		const CheckersPieceWithState* player_pieces, 
-		const CheckersPieceWithState* opponent_pieces,Board& board,
+		const CheckersPieceWithState* opponent_pieces,const Board& board,
 		vector<BoardIndex>& possible_moves) const;
 public:
 	enum { BLACK, WHITE };
@@ -130,11 +130,12 @@ public:
 	// generate possible moves and possible beat moves for CheckerPiece
 	vector<move_with_piece> possibleBeatMoves(
 		const CheckersPieceWithState* player_pieces, 
-		const CheckersPieceWithState* opponent_pieces, Board& board) const;
+		const CheckersPieceWithState* opponent_pieces, 
+		const Board& board) const;
 	vector<BoardIndex> possibleMoves(
 		const CheckersPieceWithState* player_pieces, 
 		const CheckersPieceWithState* opponent_pieces, 
-		Board& board) const;
+		const Board& board) const;
 
 	// checks whether this piece is on right row to became a king
 	// return true if can
