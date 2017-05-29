@@ -1,23 +1,6 @@
 #pragma once
 #include "checkers_pieces.h"
-struct move
-{
-	BoardIndex start_position;
-	BoardIndex end_position;
-	//static const int NOT_BEAT_MOVE = -1;
-	int iter_piece_to_move, iter_piece_to_beat;
-	bool became_king;
-	move(const BoardIndex& st_pos = BoardIndex(),
-		const BoardIndex& end_pos = BoardIndex(),
-		int iter_move_piece = -1,
-		int iter_beaten_piece = -1,
-		bool king = false): start_position(st_pos),
-		end_position(end_pos),
-		iter_piece_to_move(iter_move_piece),
-		iter_piece_to_beat(iter_beaten_piece),
-		became_king(king)
-	{}
-};
+
 template <typename T>
 inline void copyArray(T* dest, const T* source,int size)
 {
@@ -70,8 +53,7 @@ private:
 	int getCurrentPlayerSize(int player) const;
 	int getAnotherPlayerSize(int player) const;
 public: 
-	enum { WHITE_PLAYER, BLACK_PLAYER };
-	Ai(int color = WHITE_PLAYER) : white_player_(), black_player_(),
+	Ai(int color = moveWithPlayer::WHITE_PLAYER) : white_player_(), black_player_(),
 		ai_player_(color) ,iter_piece_beat_multiple_(-1),
 		board_(),number_nodes_(0)
 	{

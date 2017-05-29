@@ -170,6 +170,28 @@ istream & operator >> (istream & is, CheckersPiece & piece_to_input)
 	return is;
 }
 
+void unmakeMove(moveWithPlayer & move_to_unmake, CheckersPieceWithState * white_player, CheckersPieceWithState * black_player, Board & board)
+{
+	CheckersPieceWithState
+		*cur_player = (move_to_unmake.player == moveWithPlayer::WHITE_PLAYER ? white_player : black_player), 
+		*another_player = (move_to_unmake.player == moveWithPlayer::WHITE_PLAYER ? black_player : white_player);
+	CheckersPieceWithState &piece_to_move = cur_player[move_to_unmake.iter_piece_to_move];
+	piece_to_move.setPosition(move_to_unmake.start_position);
+	board.movePiece(move_to_unmake.start_position, move_to_unmake.end_position);
+	if (move_to_unmake.became_king)
+	{
+		piece_to_move.makePiece();
+		board.makePiece(piece_to_move.getPosition());
+	}
+	if (move_to_unmake.iter_piece_to_beat != -1)
+	{
+		CheckersPieceWithState &beaten_piece = another_player[move_to_unmake.iter_piece_to_beat];
+		beaten_piece.not_beaten = true;
+		board.getPiece(beaten_piece.getPosition()) = beaten_piece.getCheckersType();
+	}
+
+}
+
 int BoardIndex::checkForPieces(const CheckersPieceWithState* pieces) const
 {
 	int i = 0;

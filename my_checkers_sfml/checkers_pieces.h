@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <iterator>
 #include <vector>
 #include <list>
 #include <array>
@@ -77,7 +78,6 @@ enum class GameState:int
 	WHITE_WINS, 
 	BLACK_WINS 
 };
-
 struct Board
 {
 	
@@ -171,3 +171,41 @@ public:
 	bool not_beaten;
 	CheckersPieceWithState(const CheckersPiece& ch_piece = CheckersPiece(), bool n_beaten = true):CheckersPiece(ch_piece), not_beaten(n_beaten) {}
 };
+
+struct move
+{
+	
+	BoardIndex start_position;
+	BoardIndex end_position;
+	//static const int NOT_BEAT_MOVE = -1;
+	int iter_piece_to_move, iter_piece_to_beat;
+	bool became_king;
+	move(const BoardIndex& st_pos = BoardIndex(),
+		const BoardIndex& end_pos = BoardIndex(),
+		int iter_move_piece = -1,
+		int iter_beaten_piece = -1,
+		bool king = false) : start_position(st_pos),
+		end_position(end_pos),
+		iter_piece_to_move(iter_move_piece),
+		iter_piece_to_beat(iter_beaten_piece),
+		became_king(king)
+	{}
+};
+
+struct moveWithPlayer :public move
+{
+	enum { WHITE_PLAYER, BLACK_PLAYER };
+	int player;
+	
+	moveWithPlayer(int pl, const BoardIndex& st_pos = BoardIndex(),
+		const BoardIndex& end_pos = BoardIndex(),
+		int iter_move_piece = -1,
+		int iter_beaten_piece = -1,
+		bool king = false): move(st_pos, end_pos, iter_move_piece, iter_beaten_piece, king), player(pl){ }
+	moveWithPlayer(int pl, const move& mv) :player(pl), move(mv) {}
+};
+
+void unmakeMove(
+	moveWithPlayer& move_to_unmake,
+	CheckersPieceWithState* white_player, CheckersPieceWithState* black_player, 
+	Board& board);

@@ -81,6 +81,7 @@ private:
 	//last moves of player 
 	vector<BoardIndex> last_moves_of_cur_player_;
 
+	std::list<moveWithPlayer> all_moves_;
 	// on each move we check whether at least one piece of current player can beat 
 	// (because if so player must beat)
 	// and store result of our check in must_beat_
@@ -94,6 +95,7 @@ private:
 
 	bool is_piece_clicked_;
 	int piece_firstly_clicked_;
+	bool move_done_;
 
 	sf::RenderWindow window_;
 	tgui::Gui window_for_widgets_;
@@ -125,6 +127,7 @@ private:
 	void gameChooseWidgetInit();
 	void okButtonClick();
 	void cancelButtonClick();
+	void undoButtonCLick();
 	void comboBoxConnectWithSlider();
 	void menuClick(const vector<sf::String>& menu_items);
 	void sliderDragged(int new_value);

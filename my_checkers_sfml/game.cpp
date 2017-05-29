@@ -156,9 +156,67 @@ void Game::cancelButtonClick()
 	if (game_state_ == static_cast<int>(GameState::PAUSED))
 		game_state_ = static_cast<int>(GameState::RUNNING);
 	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 1)
-		choose_window_->hide();
+		choose_window_->hide();	
 	else
 		choose_window_->hideWithEffect(animation_type_, animations_duration_);
+}
+
+void Game::undoButtonCLick()
+{
+	if (!all_moves_.empty())
+	{
+		auto iter = all_moves_.rbegin();
+		bool last_move_ai = false;
+		if ((iter->player == moveWithPlayer::WHITE_PLAYER && is_white_ai_) ||
+			(iter->player == moveWithPlayer::BLACK_PLAYER && is_black_ai_))
+		{
+			last_move_ai = true;
+			do
+			{
+				unmakeMove(*iter, white_player_, black_player_, board_);
+				++iter;
+			} while ((iter != all_moves_.rend() || std::prev(iter) == all_moves_.rend()) && std::prev(iter)->player == iter->player);
+			all_moves_.erase(iter.base(), all_moves_.end()); 
+
+		}
+		if (!all_moves_.empty())
+		{
+			iter = all_moves_.rbegin();
+			do
+			{
+				unmakeMove(*iter, white_player_, black_player_, board_);
+				++iter;
+			} while ((iter != all_moves_.rend() || std::prev(iter) == all_moves_.rend()) && std::prev(iter)->player == iter->player);
+			if (!last_move_ai && move_done_)
+			{
+				last_moves_to_show_.clear();
+				hightlighted_cells_.clear();
+				changeTurn();
+			}
+			else
+			{
+
+				clearInfoForClickedPiece();
+				checkPiecesForBeating();
+			}
+			all_moves_.erase(iter.base(), all_moves_.end()); 
+
+		}
+		/*all_moves_.erase(iter.base(), all_moves_.end());
+		if (iter!=all_moves_.rend() && 
+			(is_white_ai_ && iter->player == moveWithPlayer::WHITE_PLAYER) ||
+			(is_black_ai_ && iter->player == moveWithPlayer::BLACK_PLAYER))
+		{
+			do
+			{
+				unmakeMove(*iter, white_player_, black_player_, board_);
+				++iter;
+			} while ((iter != all_moves_.rend() || std::prev(iter) == all_moves_.rend()) && std::prev(iter)->player == iter->player);
+		}
+		all_moves_.erase(iter.base(), all_moves_.end());*/
+
+
+	}
 }
 
 void Game::comboBoxConnectWithSlider()
@@ -222,8 +280,9 @@ void Game::widgetsInit()
 	unmove_button_ = theme_->load("Button");
 	next_move_button_ = theme_->load("Button");
 	unmove_button_->setText("Undo move");
+	unmove_button_->connect("pressed", &Game::undoButtonCLick,this);
 	next_move_button_->setText("Next move");
-	unmove_button_->hide();
+//	unmove_button_->hide();
 	next_move_button_->hide();
 	window_for_widgets_.add(main_menu_);
 	window_for_widgets_.add(unmove_button_);
@@ -307,9 +366,9 @@ void Game::processMouseClick(const BoardIndex& click_position)
 //}
 void Game::moveClickedPiece(const BoardIndex & click_position)
 {
-	bool move_done = false;
+	move_done_ = false;
 	int clicked_piece_player_iter = click_position.checkForPieces(cur_player_);
-
+	CheckersPieceWithState &piece_to_move = cur_player_[piece_firstly_clicked_];
 	if (!can_beat_many_times_ && clicked_piece_player_iter != -1)
 	{
 		// if we clicked on piece, not on posible move
@@ -334,19 +393,24 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 		if (i < possible_beat_moves_.size())
 		{
 			last_moves_of_cur_player_.push_back(click_position);			
+			int player = (white_turn_ ? moveWithPlayer::WHITE_PLAYER : moveWithPlayer::BLACK_PLAYER);
+			moveWithPlayer cur_move = moveWithPlayer(
+				player, piece_to_move.getPosition(), click_position, 
+				piece_firstly_clicked_, possible_beat_moves_[i].second);
 
-			board_.movePiece(cur_player_[piece_firstly_clicked_].getPosition(), click_position);
+			board_.movePiece(piece_to_move.getPosition(), click_position);
 
-			cur_player_[piece_firstly_clicked_].setPosition(click_position);
+			piece_to_move.setPosition(click_position);
 			
 			//board_.getPiece(possible_beat_moves_[i].second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
 			board_.emptyCell(another_player_[possible_beat_moves_[i].second].getPosition());
 			another_player_[possible_beat_moves_[i].second].not_beaten = false;
 
 
-			cur_player_[piece_firstly_clicked_].transformIntoKingIfPossible();
+			if (piece_to_move.transformIntoKingIfPossible())
+				cur_move.became_king = true;
 
-			possible_beat_moves_ = cur_player_[piece_firstly_clicked_].possibleBeatMoves(cur_player_, another_player_,board_);
+			possible_beat_moves_ = piece_to_move.possibleBeatMoves(cur_player_, another_player_,board_);
 			if (!possible_beat_moves_.empty())
 			{
 				can_beat_many_times_ = true;
@@ -357,25 +421,31 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 			else
 			{
 				can_beat_many_times_ = false;
-				move_done = true;
+				move_done_ = true;
 			}
+			all_moves_.push_back(cur_move);
 		}
 	}
 	else
 	{
 		if (std::find(possible_moves_.begin(), possible_moves_.end(), click_position) != possible_moves_.end())
 		{
+			
+			int player = (white_turn_ ? moveWithPlayer::WHITE_PLAYER : moveWithPlayer::BLACK_PLAYER);
+			moveWithPlayer cur_move = moveWithPlayer(player, piece_to_move.getPosition(), click_position, piece_firstly_clicked_);
 			last_moves_of_cur_player_.push_back(click_position);
 
 			board_.movePiece(cur_player_[piece_firstly_clicked_].getPosition(), click_position);
-			cur_player_[piece_firstly_clicked_].setPosition(click_position);
+			piece_to_move.setPosition(click_position);
 			
-			cur_player_[piece_firstly_clicked_].transformIntoKingIfPossible();
+			if (piece_to_move.transformIntoKingIfPossible())
+				cur_move.became_king = true;
+			all_moves_.push_back(cur_move);
 			//transformIntoKings();
-			move_done = true;
+			move_done_ = true;
 		}
 	}
-	if (move_done)
+	if (move_done_)
 	{
 		last_moves_to_show_.clear();
 		appendVector(last_moves_to_show_, last_moves_of_cur_player_);
@@ -566,8 +636,8 @@ Game::Game(int game_mode, int ai_level) :
 	can_beat_many_times_(false),
 	ai_depth_(ai_level),
 	draw_app_(window_),
-	white_ai_(Ai::WHITE_PLAYER),
-	black_ai_(Ai::BLACK_PLAYER)
+	white_ai_(moveWithPlayer::WHITE_PLAYER),
+	black_ai_(moveWithPlayer::BLACK_PLAYER)
 {
 	draw_app_.setSizesAccordingToScreenResolution();
 	window_for_widgets_.setWindow(window_);
@@ -626,6 +696,8 @@ void Game::Run()
 					while (clock.getElapsedTime() - timer < sf::milliseconds(500));
 				if (std::next(cur_best_move, 1) == best_moves_for_ai.end())
 					last_moves_to_show_.push_back(cur_best_move->end_position);
+				int player = (white_turn_ ? moveWithPlayer::WHITE_PLAYER : moveWithPlayer::BLACK_PLAYER);
+				all_moves_.push_back(moveWithPlayer(player, *cur_best_move));
 			}
 			checkForWin();
 			changeTurn();

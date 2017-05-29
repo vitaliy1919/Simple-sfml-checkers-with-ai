@@ -48,7 +48,7 @@ std::list<move> Ai::generateAllMoves(int player)
 		CheckersPieceWithState cur_piece = cur_player[iter_piece_beat_multiple_];
 		vector<move_with_piece> beat_moves = getPossibleBeatMoves(cur_piece);
 		for (auto beat_move : beat_moves)
-			result.push_back(move(move(cur_piece.getPosition(), beat_move.first, iter_piece_beat_multiple_, beat_move.second)));
+			result.push_back(move(cur_piece.getPosition(), beat_move.first, iter_piece_beat_multiple_, beat_move.second));
 	}
 	return result;
 }
@@ -124,7 +124,7 @@ int Ai::evaluatePlayerPosition(int player) const
 			else
 			{
 				cur_player_evaluation += piece_weight * 100;
-				if (player == WHITE_PLAYER)
+				if (player == moveWithPlayer::WHITE_PLAYER)
 					cur_player_evaluation += 5 * cur_piece.getPosition().row;
 				else
 					cur_player_evaluation += 5 * (9 - cur_piece.getPosition().row);
@@ -137,7 +137,10 @@ int Ai::evaluatePlayerPosition(int player) const
 
 int Ai::evaluatePosition() const
 {
-	int player = (ai_player_ == WHITE_PLAYER ? BLACK_PLAYER : WHITE_PLAYER);
+	int player = (
+		ai_player_ == moveWithPlayer::WHITE_PLAYER ? 
+		moveWithPlayer::BLACK_PLAYER : 
+		moveWithPlayer::WHITE_PLAYER);
 	int cur_player_evaluation = evaluatePlayerPosition(ai_player_),
 		another_player_evaluation = evaluatePlayerPosition(player);
 	return cur_player_evaluation - another_player_evaluation;
@@ -154,7 +157,7 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 	if (ai_player_ != player)
 		score = INT_MAX;
 	
-	int opponent_player = (player == WHITE_PLAYER ? BLACK_PLAYER : WHITE_PLAYER);
+	int opponent_player = (player == moveWithPlayer::WHITE_PLAYER ? moveWithPlayer::BLACK_PLAYER : moveWithPlayer::WHITE_PLAYER);
 	CheckersPieceWithState *cur_player = getCurrentPlayer(player), *another_player = getAnotherPlayer(player);
 	std::list<move> all_moves = generateAllMoves(player);
 	std::list<move>::iterator cur_move = all_moves.begin();
@@ -226,9 +229,9 @@ vector<BoardIndex> Ai::getPossibleMoves(const CheckersPiece& piece_to_check) con
 {
 	int player;
 	if (piece_to_check.getColor() == CheckersPiece::WHITE)
-		player = Ai::WHITE_PLAYER;
+		player = moveWithPlayer::WHITE_PLAYER;
 	else
-		player = Ai::BLACK_PLAYER;
+		player = moveWithPlayer::BLACK_PLAYER;
 	return piece_to_check.possibleMoves(getCurrentPlayer(player), getAnotherPlayer(player), board_);
 }
 
@@ -236,9 +239,9 @@ vector<move_with_piece> Ai::getPossibleBeatMoves(const CheckersPiece& piece_to_c
 {
 	int player;
 	if (piece_to_check.getColor() == CheckersPiece::WHITE)
-		player = Ai::WHITE_PLAYER;
+		player = moveWithPlayer::WHITE_PLAYER;
 	else
-		player = Ai::BLACK_PLAYER;
+		player = moveWithPlayer::BLACK_PLAYER;
 	return piece_to_check.possibleBeatMoves(getCurrentPlayer(player), getAnotherPlayer(player), board_);
 }
 
@@ -257,31 +260,31 @@ int Ai::checkForPieces(BoardIndex position_to_check, const CheckersPieceWithStat
 
 const CheckersPieceWithState * Ai::getCurrentPlayer(int player) const
 {
-	return (player == WHITE_PLAYER ? white_player_ : black_player_);
+	return (player == moveWithPlayer::WHITE_PLAYER ? white_player_ : black_player_);
 }
 
 const CheckersPieceWithState * Ai::getAnotherPlayer(int player) const
 {
-	return (player == BLACK_PLAYER ? white_player_ : black_player_);
+	return (player == moveWithPlayer::BLACK_PLAYER ? white_player_ : black_player_);
 }
 
 CheckersPieceWithState * Ai::getCurrentPlayer(int player)
 {
-	return (player == WHITE_PLAYER ? white_player_ : black_player_);
+	return (player == moveWithPlayer::WHITE_PLAYER ? white_player_ : black_player_);
 }
 
 CheckersPieceWithState * Ai::getAnotherPlayer(int player)
 {
-	return (player == BLACK_PLAYER ? white_player_ : black_player_);
+	return (player == moveWithPlayer::BLACK_PLAYER ? white_player_ : black_player_);
 }
 int Ai::getCurrentPlayerSize(int player) const
 {
-	return (player == WHITE_PLAYER ? white_player_size_ : black_player_size_);
+	return (player == moveWithPlayer::WHITE_PLAYER ? white_player_size_ : black_player_size_);
 }
 
 int Ai::getAnotherPlayerSize(int player) const
 {
-	return (player == BLACK_PLAYER ? white_player_size_ : black_player_size_);
+	return (player == moveWithPlayer::BLACK_PLAYER ? white_player_size_ : black_player_size_);
 }
 
 
