@@ -8,11 +8,11 @@ inline void copyArray(T* dest, const T* source,int size)
 		dest[i] = source[i];
 }
 
-typedef std::list<move_with_piece> list_moves_with_piece;
+typedef list<move_with_piece> list_moves_with_piece;
 class Ai
 {
 private:
-	//std::list<move> all_moves_;
+	//list<move> all_moves_;
 	Board board_;
 	
 
@@ -23,13 +23,13 @@ private:
 
 	move best_move_for_ai_;
 
-	int number_nodes_;
+	int number_nodes_ = 0;
 	
 	// iter to piece that can beat multiple times
 	// if ther is no piece - iter_piece_beat_multiple_ == -1
-	int iter_piece_beat_multiple_;
+	int iter_piece_beat_multiple_ = -1;
 	
-	std::list<move> generateAllMoves(int player);
+	list<move> generateAllMoves(int player);
 
 	void makeMove(int player, move& move_to_make);
 	void unmakeMove(int player, move& move_to_unmake);
@@ -53,12 +53,7 @@ private:
 	int getCurrentPlayerSize(int player) const;
 	int getAnotherPlayerSize(int player) const;
 public: 
-	Ai(int color = moveWithPlayer::WHITE_PLAYER) : white_player_(), black_player_(),
-		ai_player_(color) ,iter_piece_beat_multiple_(-1),
-		board_(),number_nodes_(0)
-	{
-	}
-	void update(const CheckersPieceWithState* white, const CheckersPieceWithState* black, const Board& b)
+	void updatePositions(const CheckersPieceWithState* white, const CheckersPieceWithState* black, const Board& b)
 	{
 		copyArray(white_player_, white, 12);
 		copyArray(black_player_, black, 12);
@@ -66,5 +61,5 @@ public:
 		black_player_size_ = 12;
 		board_ = b;
 	}
-	std::list<move> findBestMove(int depth);
+	list<move> findBestMove(int depth,int color);
 };

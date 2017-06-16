@@ -12,7 +12,7 @@ using std::istream;
 using std::pair;
 using std::endl;
 using std::cout;
-
+using std::list;
 
 class CheckersPiece;
 class CheckersPieceWithState;
@@ -33,7 +33,8 @@ struct BoardIndex
 {
 	char	column;	//from 'a' to 'h'
 	int		row;	//from 1 to 8	
-	explicit BoardIndex(char col = 0, int r = 0) :column(col), row(r) {}
+	BoardIndex() :column(0), row(0) {}
+	explicit BoardIndex(char col, int r) :column(col), row(r) {}
 	BoardIndex upperLeft() const { return BoardIndex(column - 1, row + 1); }
 	BoardIndex upperRight() const { return BoardIndex(column + 1, row + 1); }
 	BoardIndex bottomLeft() const { return BoardIndex(column - 1, row - 1); }
@@ -51,9 +52,7 @@ struct BoardIndex
 	//retun if there is piece on position:
 	bool checkForPiecesBool(const CheckersPieceWithState* pieces) const { return checkForPieces(pieces) != -1;  }
 	bool checkForPiecesBool(const Board& board) const;
-	//void checkForBeatingAndAddToPossibleMoves(const list_pieces& pieces, vector<move_with_piece> possible_moves) const;
 };
-//inline bool isInBoard(const BoardIndex& to_check) { return to_check.isInBoard(); }
 ostream& operator<<(ostream& os, const BoardIndex& to_show);
 istream& operator>>(istream& is, BoardIndex& to_input);
 inline bool operator==(const BoardIndex& a, const BoardIndex& b) { return (a.column == b.column) && (a.row == b.row); }
@@ -61,7 +60,7 @@ inline bool operator!=(const BoardIndex& a, const BoardIndex& b) { return !(a ==
 
 //simply names of our checkers, which are used when we represent board_ as massive 8x8
 //so it used only for board_ struct and everything conected with it
-enum class CheckersType:int
+enum CheckersType:int
 {
 	EMPTY = 0,
 	WHITE_PIECE,
@@ -69,7 +68,7 @@ enum class CheckersType:int
 	WHITE_KING,
 	BLACK_KING
 };
-enum class GameState:int
+enum GameState:int
 { 
 	NOT_RUNNING,
 	PAUSED,
@@ -78,6 +77,7 @@ enum class GameState:int
 	WHITE_WINS, 
 	BLACK_WINS 
 };
+inline BoardIndex intoBoardCoordinates(int row, int col) { return BoardIndex(col + 'a', 8 - row); }
 struct Board
 {
 	
@@ -86,7 +86,7 @@ struct Board
 	//get board_ piece (as represented in CheckersType) for given BoardIndex
 	int getPiece(const BoardIndex& position) const { return checkers_map[8 - position.row][position.column - 'a'];}
 	int& getPiece(const BoardIndex& position) { return checkers_map[8 - position.row][position.column - 'a']; }
-	void emptyCell(const BoardIndex& position) { this->getPiece(position) = static_cast<int>(CheckersType::EMPTY); }
+	void emptyCell(const BoardIndex& position) { this->getPiece(position) = CheckersType::EMPTY; }
 	void movePiece(const BoardIndex& start_position, const BoardIndex& end_position);
 	bool makeKing(const BoardIndex& position);
 	bool makePiece(const BoardIndex& position);

@@ -3,6 +3,7 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "app_draw.h"
+#include "Game.h"
 void DrawAppInstance::drawBoard()
 {
 	sf::RectangleShape cell;
@@ -96,7 +97,7 @@ void DrawAppInstance::drawPlayersPieces(const CheckersPieceWithState * player, i
 	}
 	for (int i = 0; i<12;i++)
 	{
-		if (player[i].not_beaten)
+		if (player[i].not_beaten && !(checkers_game_->cur_player_==player && i == piece_to_animate))
 		{
 			if (player[i].isKing())
 			{
@@ -113,9 +114,9 @@ void DrawAppInstance::drawPlayersPieces(const CheckersPieceWithState * player, i
 					cell_size_ / (1.2*piece_texture->getSize().x),
 					cell_size_ / (1.2* piece_texture->getSize().y)));
 			}
-			if (game_state == static_cast<int>(GameState::NOT_RUNNING))
+			if (game_state == GameState::NOT_RUNNING)
 				piece.setColor(sf::Color(255, 255, 255, 64));
-			else if (game_state == static_cast<int>(GameState::RUNNING) && color != turn)
+			else if (game_state == GameState::RUNNING && color != turn)
 				piece.setColor(sf::Color(255, 255, 255, 150));
 
 			sf::Vector2f piece_position = getRealPosition(player[i].getPosition());
@@ -130,14 +131,10 @@ void DrawAppInstance::drawPlayersPieces(const CheckersPieceWithState * player, i
 }
 
 
-DrawAppInstance::DrawAppInstance(sf::RenderWindow &wind)
+DrawAppInstance::DrawAppInstance(Game &game)
 {
-	init(wind);
-}
-
-void DrawAppInstance::init(sf::RenderWindow & wind)
-{
-	window_ = &wind;
+	checkers_game_ = &game;
+	window_ = &game.window_;
 	text_font_.loadFromFile("PT_Serif-Web-Regular.ttf");
 
 	white_piece_texture_.loadFromFile("white_man.png");
@@ -160,11 +157,6 @@ sf::Vector2f DrawAppInstance::getRealPosition(const BoardIndex & position) const
 		(8 - position.row)*cell_size_ + kTopMargin);
 }
 
-void DrawAppInstance::setWindow(
-	sf::RenderWindow& wind)
-{
-	window_ = &wind;
-}
 
 
 
@@ -176,10 +168,7 @@ BoardIndex DrawAppInstance::clickPositionInBoard(int x, int y)
 }
 
 
-void DrawAppInstance::setMenuPosition(tgui::MenuBar::Ptr main_menu)
-{
 
-}
 
 void DrawAppInstance::drawBeatenPieces(int white_player_size, int black_player_size)
 {
@@ -252,6 +241,58 @@ void DrawAppInstance::drawBeatenPieces(int white_player_size, int black_player_s
 	}
 }
 
+void DrawAppInstance::animate(const BoardIndex & start, const BoardIndex & end, int checkers_type)
+{
+	auto real_start = getRealPosition(start), real_end = getRealPosition(end);
+	auto diff = real_end - real_start;
+	sf::Sprite animate;
+	piece_to_animate = start.checkForPieces(checkers_game_->cur_player_);
+	switch (checkers_type)
+	{
+		case CheckersType::BLACK_KING:
+		{
+			animate.setTexture(black_king_texture_);
+			break;
+		}
+		case CheckersType::BLACK_PIECE:
+		{
+			animate.setTexture(black_piece_texture_);
+			break;
+		}
+		case CheckersType::WHITE_KING:
+		{
+			animate.setTexture(white_king_texture_);
+			break;
+		}
+		case CheckersType::WHITE_PIECE:
+		{
+			animate.setTexture(white_piece_texture_);
+			break;
+		}
+	}
+	sf::Time timer;
+	sf::Clock clock;
+	animate.setScale(cell_size_ / white_king_texture_.getSize().x, cell_size_ / white_king_texture_.getSize().y);
+	animate.setPosition(getRealPosition(start));
+	const int kNumberOfIterations = 40;
+	for (int i = 0; i < kNumberOfIterations; i++)
+	{
+		clock.restart();
+		timer = clock.getElapsedTime();
+		window_->clear(sf::Color(255, 228, 170, 255));
+		//checkers_game_->redrawPosition();
+		drawStaticElements();
+		drawPieces();
+		checkers_game_->window_for_widgets_.draw();
+		//drawPieces();
+		animate.move(diff.x / kNumberOfIterations, diff.y / kNumberOfIterations);
+		while ((clock.getElapsedTime()-timer) < sf::milliseconds(10));
+		window_->draw(animate);
+		window_->display();
+	}
+	piece_to_animate = -1;
+}
+
 void DrawAppInstance::highlightCells(const vector<BoardIndex>& cells_to_highlight, sf::Color color, float thickness)
 {
 	
@@ -268,45 +309,39 @@ void DrawAppInstance::highlightCells(const vector<BoardIndex>& cells_to_highligh
 	}
 }
 
-void DrawAppInstance::drawStaticElements(bool is_white_move,
-	const vector<BoardIndex>& higlighted, 
-	const vector<BoardIndex>& last_moves,
-	int white_size_,
-	int black_size_)
+void DrawAppInstance::drawStaticElements()
 {
 	drawBoard();
 	float kThickness = 0.08*cell_size_;
-	highlightCells(last_moves, sf::Color(118, 255, 3, 255),kThickness/1.5);
-	highlightCells(higlighted, sf::Color(255, 193, 7, 255),kThickness);
-	drawTurn(is_white_move);
-	drawBeatenPieces(white_size_,black_size_);
-	/*sf::Texture trasparent_image;
-	trasparent_image.loadFromFile("transparent.png");
-	sf::Sprite spr(trasparent_image);
-	window_->draw(spr);*/
-
+	highlightCells(checkers_game_->last_moves_to_show_, sf::Color(118, 255, 3, 255),kThickness/1.5);
+	highlightCells(checkers_game_->hightlighted_cells_, sf::Color(255, 193, 7, 255),kThickness);
+	drawTurn(checkers_game_->white_turn_);
+	int white_size = sizeOfPieces(checkers_game_->white_player_),
+		black_size = sizeOfPieces(checkers_game_->black_player_);
+	drawBeatenPieces(white_size,black_size);
 }
 
 void DrawAppInstance::setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button)
 {
-	main_menu->setSize(tgui::Layout2d(kLeftMargin + board_size_ + kRightMargin, kMenuSize));
-	unmove_button->setPosition(kLeftMargin, kTopMargin + board_size_ + kObjectMargin);
-	move_button->setPosition(kLeftMargin + unmove_button->getSize().x+kObjectMargin, kTopMargin + board_size_ + kObjectMargin);
+	
+
 }
 
-void DrawAppInstance::drawPieces(const CheckersPieceWithState * white_player, const CheckersPieceWithState * black_pieces, int game_state, int turn)
+void DrawAppInstance::drawPieces()
 {
-	drawPlayersPieces(white_player, game_state, turn);
-	drawPlayersPieces(black_pieces, game_state, turn);
+	int cur_color = (checkers_game_->white_turn_ ? CheckersPiece::WHITE : CheckersPiece::BLACK);
+	drawPlayersPieces(checkers_game_->white_player_, checkers_game_->game_state_, cur_color);
+	drawPlayersPieces(checkers_game_->black_player_, checkers_game_->game_state_, cur_color);
 }
 
-void DrawAppInstance::drawWinState(int game_state)
+void DrawAppInstance::drawWinState()
 {
+	
 	sf::Text win_text("", text_font_, 100);
 	win_text.setPosition(sf::Vector2f(
 		kLeftMargin + (board_size_ / 2 - win_text.getGlobalBounds().width),
 		kTopMargin + (board_size_ / 2 - win_text.getGlobalBounds().height)));
-	switch (game_state)
+	switch (checkers_game_->game_state_)
 	{
 	case static_cast<int>(GameState::WHITE_WINS):
 		win_text.setString("White wins!");
@@ -337,6 +372,8 @@ void DrawAppInstance::setSizesAccordingToScreenResolution()
 
 	// get display resolution
 	video_mode = video_mode.getDesktopMode();
+	display_height_ = video_mode.height;
+	display_width_ = video_mode.width;
 
 	//and use it to make game playable on different screen resolution
 	unsigned int window_size = 0.75*std::min(video_mode.height, video_mode.width);// window_size = 900 * 0.8;;

@@ -121,16 +121,16 @@ int CheckersPiece::getCheckersType() const
 	if (color_ == WHITE)
 	{
 		if (is_king_)
-			return static_cast<int>(CheckersType::WHITE_KING);
+			return CheckersType::WHITE_KING;
 		else
-			return static_cast<int>(CheckersType::WHITE_PIECE);
+			return CheckersType::WHITE_PIECE;
 	}
 	else
 	{
 		if (is_king_)
-			return static_cast<int>(CheckersType::BLACK_KING);
+			return CheckersType::BLACK_KING;
 		else
-			return static_cast<int>(CheckersType::BLACK_PIECE);
+			return CheckersType::BLACK_PIECE;
 	}
 }
 
@@ -207,8 +207,8 @@ int BoardIndex::checkForPieces(const Board & board) const
 	int piece = board.getPiece(*this);
 	if (piece == 0)
 		return -1;
-	else if (piece == static_cast<int>(CheckersType::WHITE_PIECE) ||
-		piece == static_cast<int>(CheckersType::WHITE_KING))
+	else if (piece == CheckersType::WHITE_PIECE ||
+		piece == CheckersType::WHITE_KING)
 		return CheckersPiece::WHITE;
 	else
 		return CheckersPiece::BLACK;
@@ -216,7 +216,7 @@ int BoardIndex::checkForPieces(const Board & board) const
 
 bool BoardIndex::checkForPiecesBool(const Board & board) const
 {
-	return board.getPiece(*this) != static_cast<int>(CheckersType::EMPTY);
+	return board.getPiece(*this) != CheckersType::EMPTY;
 }
 
 
@@ -229,10 +229,10 @@ void Board::movePiece(const BoardIndex & start_position, const BoardIndex & end_
 bool Board::makeKing(const BoardIndex & position)
 {
 	int &piece_on_position = this->getPiece(position);
-	if (piece_on_position == static_cast<int>(CheckersType::WHITE_PIECE))
-		piece_on_position = static_cast<int>(CheckersType::WHITE_KING);
-	else if (piece_on_position == static_cast<int>(CheckersType::BLACK_PIECE))
-		piece_on_position = static_cast<int>(CheckersType::BLACK_KING);
+	if (piece_on_position == CheckersType::WHITE_PIECE)
+		piece_on_position = CheckersType::WHITE_KING;
+	else if (piece_on_position == CheckersType::BLACK_PIECE)
+		piece_on_position = CheckersType::BLACK_KING;
 	else
 		return false;
 	return true;
@@ -241,10 +241,10 @@ bool Board::makeKing(const BoardIndex & position)
 bool Board::makePiece(const BoardIndex & position)
 {
 	int &piece_on_position = this->getPiece(position);
-	if (piece_on_position == static_cast<int>(CheckersType::WHITE_KING))
-		piece_on_position = static_cast<int>(CheckersType::WHITE_PIECE);
-	else if (piece_on_position == static_cast<int>(CheckersType::BLACK_KING))
-		piece_on_position = static_cast<int>(CheckersType::BLACK_PIECE);
+	if (piece_on_position == CheckersType::WHITE_KING)
+		piece_on_position = CheckersType::WHITE_PIECE;
+	else if (piece_on_position == CheckersType::BLACK_KING)
+		piece_on_position = CheckersType::BLACK_PIECE;
 	else
 		return false;
 	return true;
@@ -254,5 +254,5 @@ void Board::clear()
 {
 	for (int i = 0; i < 8; i++)
 		for (int j = 0; j < 8; j++)
-			checkers_map[i][j] = static_cast<int>(CheckersType::EMPTY);
+			checkers_map[i][j] = CheckersType::EMPTY;
 }

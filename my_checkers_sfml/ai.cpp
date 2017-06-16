@@ -5,9 +5,9 @@
 
 #include "ai.h"
 #include <ctime>
-std::list<move> Ai::generateAllMoves(int player)
+list<move> Ai::generateAllMoves(int player)
 {
-	std::list<move> result;
+	list<move> result;
 	CheckersPieceWithState *cur_player = getCurrentPlayer(player),
 		*another_player = getAnotherPlayer(player);
 	if (iter_piece_beat_multiple_ == -1)
@@ -159,8 +159,8 @@ int Ai::alphaBeta(int player, int depth, int max_ai, int min_player)
 	
 	int opponent_player = (player == moveWithPlayer::WHITE_PLAYER ? moveWithPlayer::BLACK_PLAYER : moveWithPlayer::WHITE_PLAYER);
 	CheckersPieceWithState *cur_player = getCurrentPlayer(player), *another_player = getAnotherPlayer(player);
-	std::list<move> all_moves = generateAllMoves(player);
-	std::list<move>::iterator cur_move = all_moves.begin();
+	list<move> all_moves = generateAllMoves(player);
+	list<move>::iterator cur_move = all_moves.begin();
 	
 	if (cur_move == all_moves.end())
 		return score;
@@ -289,17 +289,18 @@ int Ai::getAnotherPlayerSize(int player) const
 
 
 
-std::list<move> Ai::findBestMove(int depth)
+list<move> Ai::findBestMove(int depth, int color)
 {
+	ai_player_ = color;
 	number_nodes_ = 0;
 	time_t start_time = clock();
 	iter_piece_beat_multiple_ = -1;
-	std::list<move> result_moves;
+	list<move> result_moves;
 	CheckersPieceWithState *cur_player = getCurrentPlayer(ai_player_);
 	bool can_beat_multiple = false;
 	do
 	{
-		std::list<move> cur_position_moves = generateAllMoves(ai_player_);
+		list<move> cur_position_moves = generateAllMoves(ai_player_);
 		if (cur_position_moves.size() != 1)
 			alphaBeta(ai_player_, depth);
 		else

@@ -1,73 +1,32 @@
 #pragma once
 #include "checkers_pieces.h"
+#include "gui.h"
 #include "ai.h"
 #include "icon.h"
 #include <fstream>
 #include <algorithm>
 #include <sstream>
-#include <TGUI/TGUI.hpp>
 #include "app_draw.h"
-// useful operation on vectors and lists
-template <typename T>
-inline void appendVector(vector<T>& dest, const vector<T>& source)
-{
-	dest.insert(dest.end(), source.begin(), source.end());
-}
-template <typename T>
-inline void appendVector(vector<T>& dest, const std::list<T>& source)
-{
-	dest.insert(dest.end(), source.begin(), source.end());
-}
-inline void appendVector(vector<BoardIndex>& dest, const CheckersPieceWithState* source)
-{
-	for (int i=0;i<12;i++)
-		if (source[i].not_beaten)
-			dest.push_back(source[i].getPosition());
-}	
-inline void appendVector(vector<BoardIndex>& dest, const std::list<CheckersPiece>& source)
-{
-	for (auto x : source)
-	{
-		dest.push_back(x.getPosition());
-	}
-}
-inline void appendVector(vector<BoardIndex>& dest, const vector<move_with_piece>& source)
-{
-	for (auto x : source)
-	{
-		dest.push_back(x.first);
-	}
-}
 
-//bool is_in(const list_pieces& pieces, key);
-template <typename T>
-inline typename vector<T>::iterator findInVector(vector<T>& source, T key)
-{
-	return std::find(source.begin(), source.end(), key);
-}
-inline typename vector<move_with_piece>::iterator findInVector(vector<move_with_piece>& source, BoardIndex key)
-{
-	vector<move_with_piece>::iterator iter = source.begin();
-	while (iter != source.end() && iter->first != key)
-		++iter;
-	return iter;
-}
+
+
 // this class represents our checkers
 // it has metod run, which is all you need to create game instance
 class Game
 {
 private:
+	friend class DrawAppInstance;
+	friend class AppWidgets;
 	CheckersPieceWithState white_player_[12];
 	CheckersPieceWithState black_player_[12];
 	Board board_;
-	bool white_turn_;
+	bool white_turn_ = true;
 	CheckersPieceWithState *cur_player_;
 	CheckersPieceWithState *another_player_;
 
 	bool is_white_ai_;
 	bool is_black_ai_;
-	Ai black_ai_;
-	Ai white_ai_;
+	Ai ai_;
 	
 	// hightlighted_cells_ are cells which be highlighted with yellow on board_
 	// possible_beat_moves_ and possible_moves_ store possible moves for clicked piece
@@ -81,57 +40,46 @@ private:
 	//last moves of player 
 	vector<BoardIndex> last_moves_of_cur_player_;
 
-	std::list<moveWithPlayer> all_moves_;
+	list<moveWithPlayer> all_moves_;
 	// on each move we check whether at least one piece of current player can beat 
 	// (because if so player must beat)
 	// and store result of our check in must_beat_
 	// pieces_that_can_beat_ contains all pieces which can beat
-	bool must_beat_;
-	bool can_beat_many_times_;
-	std::list<BoardIndex> pieces_that_can_beat_;
+	bool must_beat_ = false;
+	bool can_beat_many_times_ = false;
+	list<BoardIndex> pieces_that_can_beat_;
 
 	// if we click on piece we store this in is_piece_clicked_
 	// and also store pointer to the element in piece_firstly_clicked_
 
-	bool is_piece_clicked_;
-	int piece_firstly_clicked_;
-	bool move_done_;
+	bool is_piece_clicked_ = false;
+	int piece_firstly_clicked_ = -1;
+	bool move_done_ = false;
 
 	sf::RenderWindow window_;
 	tgui::Gui window_for_widgets_;
-	tgui::MenuBar::Ptr main_menu_;
-	tgui::Button::Ptr unmove_button_, next_move_button_;
-
-	sf::Time animations_duration_;
-	tgui::ShowAnimationType animation_type_ = tgui::ShowAnimationType::SlideFromTop;
-	tgui::ChildWindow::Ptr choose_window_;
-	tgui::Theme::Ptr theme_ = tgui::Theme::create();
-	tgui::Label::Ptr text_label_for_level_state_ = theme_->load("Label"),
-		text_label_for_level_ = theme_->load("Label");
-	tgui::ComboBox::Ptr player_or_ai_choose_[2];
-	tgui::Slider::Ptr level_slider_ = theme_->load("Slider");
+	
+	AppWidgets widgets_app_;
 
 	int game_state_;
 	bool game_ended_;
-	int game_mode_;
 	int ai_depth_;
+
+	enum { CHECKERS_GAME, POSITION_EDITOR };
+	int game_mode_ = CHECKERS_GAME;
+
+	// -1 - black ai, 0 - user move, 1 - mhite ai
+	int isAiMove();
+	sf::Time moveAi(list<move>& best_moves_for_ai);
+
+	void applyAndShowMoves(const list<move>& moves_to_apply, sf::Time already_elapsed_time = sf::seconds(0), bool change_turn_after = true);
 	// function used for drawing
 	// drawPlayersPieces draws pieces for one of players
 	// drawWinState draws big text with winner, when game ended
 
 	DrawAppInstance draw_app_;
 	void redrawPosition();
-
-
-	// set initial state of board_ and resourses
-	void gameChooseWidgetInit();
-	void okButtonClick();
-	void cancelButtonClick();
-	void undoButtonCLick();
-	void comboBoxConnectWithSlider();
-	void menuClick(const vector<sf::String>& menu_items);
-	void sliderDragged(int new_value);
-	void widgetsInit();
+	void draw();
 	// check current player pieces whether at least one of them can beat
 	// if so, fill must_beat_ and pieces_that_can_beat_
 	void checkPiecesForBeating();
@@ -169,8 +117,7 @@ private:
 	// used for save and load game positions
 	void clearAllStates();
 public:
-	enum { TWO_PLAYERS, BLACK_AI, WHITE_AI, TWO_AI };
-	Game(int game_mode = BLACK_AI, int game_level = 5);
+	Game();
 	void playersInit();
 
 	void Run();

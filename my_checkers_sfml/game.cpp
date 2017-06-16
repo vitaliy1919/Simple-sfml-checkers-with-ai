@@ -4,7 +4,51 @@
 
 #include "Game.h"
 #include <ctime>
+// useful operation on vectors and lists
+template <typename T>
+inline void appendVector(vector<T>& dest, const vector<T>& source)
+{
+	dest.insert(dest.end(), source.begin(), source.end());
+}
+template <typename T>
+inline void appendVector(vector<T>& dest, const list<T>& source)
+{
+	dest.insert(dest.end(), source.begin(), source.end());
+}
+inline void appendVector(vector<BoardIndex>& dest, const CheckersPieceWithState* source)
+{
+	for (int i = 0; i<12; i++)
+		if (source[i].not_beaten)
+			dest.push_back(source[i].getPosition());
+}
+inline void appendVector(vector<BoardIndex>& dest, const list<CheckersPiece>& source)
+{
+	for (auto x : source)
+	{
+		dest.push_back(x.getPosition());
+	}
+}
+inline void appendVector(vector<BoardIndex>& dest, const vector<move_with_piece>& source)
+{
+	for (auto x : source)
+	{
+		dest.push_back(x.first);
+	}
+}
 
+template <typename T>
+inline typename vector<T>::iterator findInVector(vector<T>& source, T key)
+{
+	return std::find(source.begin(), source.end(), key);
+}
+
+inline typename vector<move_with_piece>::iterator findInVector(vector<move_with_piece>& source, BoardIndex key)
+{
+	vector<move_with_piece>::iterator iter = source.begin();
+	while (iter != source.end() && iter->first != key)
+		++iter;
+	return iter;
+}
 void Game::playersInit()
 {
 	int iter = 0;
@@ -16,7 +60,7 @@ void Game::playersInit()
 			white_player_[iter] = CheckersPiece(BoardIndex(i, j), CheckersPiece::WHITE);
 			/*white_player_[iter].setPosition({ i,j });
 			white_player_[iter].setColor(CheckersPiece::WHITE);*/
-			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::WHITE_PIECE);
+			board_.getPiece(BoardIndex(i, j)) = CheckersType::WHITE_PIECE;
 			iter++;
 		}
 	}
@@ -29,266 +73,13 @@ void Game::playersInit()
 			black_player_[iter] = CheckersPiece( BoardIndex(i, j), CheckersPiece::BLACK );
 			/*black_player_[iter].setPosition({ i,j });
 			black_player_[iter].setColor(CheckersPiece::BLACK);*/
-			board_.getPiece(BoardIndex(i, j)) = static_cast<int>(CheckersType::BLACK_PIECE);
+			board_.getPiece(BoardIndex(i, j)) = CheckersType::BLACK_PIECE;
 			iter++;
 		}
 	}
 }
 
-void Game::gameChooseWidgetInit()
-{
-	tgui::Button::Ptr ok_button = theme_->load("Button"), cancel_button = theme_->load("Button");
-	tgui::Label::Ptr text_label_for_white = theme_->load("Label"),
-		text_label_for_black = theme_->load("Label"),
-		text_label_for_vs = theme_->load("Label");
-	
-	choose_window_ = theme_->load("ChildWindow");
-	choose_window_->setResizable(true);
-	choose_window_->setTitle("Choose game settings: ");
-	choose_window_->setSize(window_.getSize().x / 2, window_.getSize().y / 4.5);
-	choose_window_->setTitleButtons(tgui::ChildWindow::None);
 
-	tgui::Layout2d center_coord = tgui::Layout2d(
-		int((window_.getSize().x - choose_window_->getSize().x) / 2),
-		int((window_.getSize().y - choose_window_->getSize().y) / 2));
-	choose_window_->setPosition(center_coord);
-	window_for_widgets_.add(choose_window_);
-
-	ok_button->setText("OK");	
-	cancel_button->setText("Cancel");
-	text_label_for_white->setText("White player:");
-	text_label_for_black->setText("Black player:");
-	//text_label_for_vs->setHorizontalAlignment(tgui::Label::HorizontalAlignment::Center);
-	text_label_for_vs->setSize(20, text_label_for_vs->getSize().y);
-	text_label_for_vs->setAutoSize(true);
-	text_label_for_vs->setText("vs");
-	text_label_for_level_->setText("Ai level: ");
-	text_label_for_level_state_->setText("1");
-	tgui::Layout2d 
-		choose_size = choose_window_->getSize(),
-		ok_size = ok_button->getSize(), 
-		cancel_size = cancel_button->getSize();
-	float object_margin = 2*draw_app_.getObjectMargin();
-
-	text_label_for_white->setPosition((choose_size.x / 2 - text_label_for_white->getSize().x) / 2, object_margin);
-	text_label_for_black->setPosition(choose_size.x / 2 + (choose_size.x / 2 - text_label_for_black->getSize().x) / 2, object_margin);
-	choose_window_->add(text_label_for_white);
-	choose_window_->add(text_label_for_black);
-
-	player_or_ai_choose_[0] = theme_->load("ComboBox");
-	player_or_ai_choose_[1] = theme_->load("ComboBox");
-	player_or_ai_choose_[0]->addItem("Player");
-	player_or_ai_choose_[0]->addItem("Ai");
-	player_or_ai_choose_[1]->addItem("Player");
-	player_or_ai_choose_[1]->addItem("Ai");
-
-	player_or_ai_choose_[0]->setPosition(
-		(choose_size.x / 2 - player_or_ai_choose_[0]->getSize().x) / 2,
-		2 * object_margin + text_label_for_white->getSize().y);
-	player_or_ai_choose_[1]->setPosition(
-		choose_size.x / 2 + (choose_size.x / 2 - player_or_ai_choose_[1]->getSize().x) / 2,
-		2 * object_margin + text_label_for_black->getSize().y);
-	player_or_ai_choose_[0]->setSelectedItemByIndex(0);
-	player_or_ai_choose_[1]->setSelectedItemByIndex(1);
-	player_or_ai_choose_[0]->connect("ItemSelected", &Game::comboBoxConnectWithSlider, this);
-	player_or_ai_choose_[1]->connect("ItemSelected", &Game::comboBoxConnectWithSlider, this);
-	choose_window_->add(player_or_ai_choose_[0]);
-	choose_window_->add(player_or_ai_choose_[1]);
-	
-	text_label_for_level_->setPosition(
-		2 * object_margin, 
-		player_or_ai_choose_[0]->getPosition().y + player_or_ai_choose_[0]->getSize().y + 2 * object_margin);
-	choose_window_->add(text_label_for_level_);
-	
-	level_slider_->setPosition(
-		text_label_for_level_->getPosition().x+text_label_for_level_->getSize().x+object_margin,
-		player_or_ai_choose_[0]->getPosition().y + player_or_ai_choose_[0]->getSize().y + 2 * object_margin);
-	level_slider_->setMinimum(1);
-	level_slider_->setMaximum(9);
-	level_slider_->setValue(1);
-	choose_window_->add(level_slider_);
-	comboBoxConnectWithSlider();
-
-	text_label_for_level_state_->setPosition(
-		level_slider_->getPosition().x + level_slider_->getSize().x + object_margin,
-		level_slider_->getPosition().y);
-	choose_window_->add(text_label_for_level_state_);
-	level_slider_->connect("ValueChanged", &Game::sliderDragged, this);
-
-	text_label_for_vs->setPosition((choose_size.x - text_label_for_vs->getSize().x) / 2, player_or_ai_choose_[0]->getPosition().y);
-	choose_window_->add(text_label_for_vs);
-	ok_button->setPosition(
-		(choose_size.x - ok_size.x - cancel_size.x - object_margin) / 2,
-		choose_size.y - object_margin - ok_size.y);
-	cancel_button->setPosition(
-		(choose_size.x + ok_size.x + object_margin - cancel_size.x) / 2,
-		choose_size.y - object_margin - cancel_size.y);
-
-	ok_button->connect("pressed", &Game::okButtonClick,this);
-	cancel_button->connect("pressed", &Game::cancelButtonClick,this);
-	choose_window_->add(ok_button);
-	choose_window_->add(cancel_button);
-}
-
-void Game::okButtonClick()
-{
-	
-	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 0)
-		is_white_ai_ = false;
-	else
-		is_white_ai_ = true;
-	if (player_or_ai_choose_[1]->getSelectedItemIndex() == 0)
-		is_black_ai_ = false;
-	else
-		is_black_ai_ = true;
-	ai_depth_ = level_slider_->getValue();
-	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 1)
-		choose_window_->hide();
-	else
-		choose_window_->hideWithEffect(animation_type_, animations_duration_);
-	clearAllStates();
-	playersInit();
-	
-}
-
-void Game::cancelButtonClick()
-{
-	if (game_state_ == static_cast<int>(GameState::PAUSED))
-		game_state_ = static_cast<int>(GameState::RUNNING);
-	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 1)
-		choose_window_->hide();	
-	else
-		choose_window_->hideWithEffect(animation_type_, animations_duration_);
-}
-
-void Game::undoButtonCLick()
-{
-	if (!all_moves_.empty())
-	{
-		auto iter = all_moves_.rbegin();
-		bool last_move_ai = false;
-		if ((iter->player == moveWithPlayer::WHITE_PLAYER && is_white_ai_) ||
-			(iter->player == moveWithPlayer::BLACK_PLAYER && is_black_ai_))
-		{
-			last_move_ai = true;
-			do
-			{
-				unmakeMove(*iter, white_player_, black_player_, board_);
-				++iter;
-			} while ((iter != all_moves_.rend() || std::prev(iter) == all_moves_.rend()) && std::prev(iter)->player == iter->player);
-			all_moves_.erase(iter.base(), all_moves_.end()); 
-
-		}
-		if (!all_moves_.empty())
-		{
-			iter = all_moves_.rbegin();
-			do
-			{
-				unmakeMove(*iter, white_player_, black_player_, board_);
-				++iter;
-			} while ((iter != all_moves_.rend() || std::prev(iter) == all_moves_.rend()) && std::prev(iter)->player == iter->player);
-			if (!last_move_ai && move_done_)
-			{
-				last_moves_to_show_.clear();
-				hightlighted_cells_.clear();
-				changeTurn();
-			}
-			else
-			{
-
-				clearInfoForClickedPiece();
-				checkPiecesForBeating();
-			}
-			all_moves_.erase(iter.base(), all_moves_.end()); 
-
-		}
-		/*all_moves_.erase(iter.base(), all_moves_.end());
-		if (iter!=all_moves_.rend() && 
-			(is_white_ai_ && iter->player == moveWithPlayer::WHITE_PLAYER) ||
-			(is_black_ai_ && iter->player == moveWithPlayer::BLACK_PLAYER))
-		{
-			do
-			{
-				unmakeMove(*iter, white_player_, black_player_, board_);
-				++iter;
-			} while ((iter != all_moves_.rend() || std::prev(iter) == all_moves_.rend()) && std::prev(iter)->player == iter->player);
-		}
-		all_moves_.erase(iter.base(), all_moves_.end());*/
-
-
-	}
-}
-
-void Game::comboBoxConnectWithSlider()
-{
-	if (player_or_ai_choose_[0]->getSelectedItemIndex() == 0 &&
-		player_or_ai_choose_[1]->getSelectedItemIndex() == 0)
-	{
-		level_slider_->hide();
-		text_label_for_level_state_->hide();
-		text_label_for_level_->hide();
-	}
-	else
-	{
-		level_slider_->show();
-		text_label_for_level_state_->show();
-		text_label_for_level_->show();
-	}
-}
-
-void Game::menuClick(const vector<sf::String>& menu_items)
-{
-	int i = 0;
-	sf::Time timer;
-	timer = sf::seconds(0.5);
-	if (menu_items[i] == "Game")
-	{
-		i++;
-		if (menu_items[i] == "New game")
-		{
-			window_for_widgets_.removeAllWidgets();
-			widgetsInit();
-			draw_app_.setWidgetsPosition(main_menu_, unmove_button_, next_move_button_);
-			gameChooseWidgetInit();
-			choose_window_->showWithEffect(animation_type_,animations_duration_);
-			if (game_state_ == static_cast<int>(GameState::RUNNING))
-				game_state_ = static_cast<int>(GameState::PAUSED);
-			else
-				game_state_ = static_cast<int>(GameState::NOT_RUNNING);
-		}
-		if (menu_items[i] == "Quit")
-			window_.close();
-	}
-}
-
-void Game::sliderDragged(int new_value)
-{
-	text_label_for_level_state_->setText(std::to_string(new_value));
-}
-
-
-
-void Game::widgetsInit()
-{
-	main_menu_ = theme_->load("MenuBar");
-	main_menu_->setSize(tgui::Layout2d(float(window_.getSize().x), 25));
-	main_menu_->addMenu("Game");
-	main_menu_->addMenuItem("Game", "New game");
-	main_menu_->addMenuItem("Game", "Staticstics");
-	main_menu_->addMenuItem("Game","Quit");
-	main_menu_->connect("MenuItemClicked",&Game::menuClick,this);
-	unmove_button_ = theme_->load("Button");
-	next_move_button_ = theme_->load("Button");
-	unmove_button_->setText("Undo move");
-	unmove_button_->connect("pressed", &Game::undoButtonCLick,this);
-	next_move_button_->setText("Next move");
-//	unmove_button_->hide();
-	next_move_button_->hide();
-	window_for_widgets_.add(main_menu_);
-	window_for_widgets_.add(unmove_button_);
-	window_for_widgets_.add(next_move_button_);
-	draw_app_.setWidgetsPosition(main_menu_, unmove_button_, next_move_button_);
-}
 void Game::changeTurn()
 {
 	white_turn_ = !white_turn_;
@@ -333,8 +124,13 @@ void Game::processMouseClick(const BoardIndex& click_position)
 					// clear hightlighted_cells_ (which stores pieces_that_can_beat_ previously)
 					// and add new info
 					hightlighted_cells_.clear();
-					hightlighted_cells_.push_back(cur_player_[piece_on_position].getPosition());
-					appendVector(hightlighted_cells_, possible_beat_moves_);
+					if (possible_beat_moves_.size() == 1)
+						moveClickedPiece(possible_beat_moves_.front().first);
+					else
+					{
+						hightlighted_cells_.push_back(cur_player_[piece_on_position].getPosition());
+						appendVector(hightlighted_cells_, possible_beat_moves_);
+					}
 				}
 			}
 			else
@@ -342,28 +138,19 @@ void Game::processMouseClick(const BoardIndex& click_position)
 				is_piece_clicked_ = true;
 				piece_firstly_clicked_ = piece_on_position;
 				possible_moves_ = cur_player_[piece_on_position].possibleMoves(cur_player_, another_player_, board_);
-				hightlighted_cells_.push_back(cur_player_[piece_on_position].getPosition());
-				appendVector(hightlighted_cells_, possible_moves_);
+				if (possible_moves_.size() == 1)
+					moveClickedPiece(possible_moves_.front());
+				else
+				{
+					hightlighted_cells_.push_back(cur_player_[piece_on_position].getPosition());
+					appendVector(hightlighted_cells_, possible_moves_);
+				}
 			}
 		}
 	}
 }
-//void Game::buildPossibleMoves(int clicked_piece_iter)
-//{
-//	piece_firstly_clicked_ = clicked_piece_iter;
-//	possible_beat_moves_ = cur_player_[clicked_piece_iter].piece.possibleBeatMoves(cur_player_, another_player_, board_);
-//	if (!possible_beat_moves_.empty())
-//	{
-//		for (auto x : possible_beat_moves_)
-//			hightlighted_cells_.push_back(x.first);
-//	}
-//	else
-//	{
-//		possible_moves_ = cur_player_[clicked_piece_iter].piece.possibleMoves(cur_player_, another_player_, board_);
-//		for (auto x : possible_moves_)
-//			hightlighted_cells_.push_back(x);
-//	}
-//}
+
+
 void Game::moveClickedPiece(const BoardIndex & click_position)
 {
 	move_done_ = false;
@@ -381,6 +168,7 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 		// if we clicked on other piece - make move for it
 		if (clicked_piece_player_iter != previously_clicked_piece)
 			processMouseClick(click_position);
+		return;
 	}
 
 	if (!possible_beat_moves_.empty())
@@ -399,10 +187,10 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 				piece_firstly_clicked_, possible_beat_moves_[i].second);
 
 			board_.movePiece(piece_to_move.getPosition(), click_position);
+			draw_app_.animate(cur_player_[piece_firstly_clicked_].getPosition(), click_position, cur_player_[piece_firstly_clicked_].getCheckersType());
 
 			piece_to_move.setPosition(click_position);
 			
-			//board_.getPiece(possible_beat_moves_[i].second->getPosition()) = static_cast<int>(CheckersType::EMPTY);
 			board_.emptyCell(another_player_[possible_beat_moves_[i].second].getPosition());
 			another_player_[possible_beat_moves_[i].second].not_beaten = false;
 
@@ -435,6 +223,7 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 			moveWithPlayer cur_move = moveWithPlayer(player, piece_to_move.getPosition(), click_position, piece_firstly_clicked_);
 			last_moves_of_cur_player_.push_back(click_position);
 
+			draw_app_.animate(cur_player_[piece_firstly_clicked_].getPosition(), click_position, cur_player_[piece_firstly_clicked_].getCheckersType());
 			board_.movePiece(cur_player_[piece_firstly_clicked_].getPosition(), click_position);
 			piece_to_move.setPosition(click_position);
 			
@@ -459,15 +248,15 @@ void Game::checkForWin()
 	int white_size = sizeOfPieces(white_player_),
 		black_size = sizeOfPieces(black_player_);
 	if (white_size == 0)
-		game_state_ = static_cast<int>(GameState::BLACK_WINS);
+		game_state_ = GameState::BLACK_WINS;
 	else if (black_size == 0)
-		game_state_ = static_cast<int>(GameState::WHITE_WINS);
+		game_state_ = GameState::WHITE_WINS;
 	else if (white_turn_ && !checkPlayerHasMove(white_player_))
-		game_state_ = static_cast<int>(GameState::BLACK_WINS);
+		game_state_ = GameState::BLACK_WINS;
 	else if (!white_turn_ && !checkPlayerHasMove(black_player_))
-		game_state_ = static_cast<int>(GameState::WHITE_WINS);
+		game_state_ = GameState::WHITE_WINS;
 	else
-		game_state_ = static_cast<int>(GameState::RUNNING);
+		game_state_ = GameState::RUNNING;
 }
 void Game::makeMove(const move & move_to_make)
 {
@@ -524,69 +313,187 @@ void Game::loadFromFile(std::string file_name)
 {
 	std::ifstream in(file_name);
 	clearAllStates();
-	std::stringstream str_stream;
-	std::string str;
-	getline(in, str);
-	str_stream << str;
-	CheckersPiece piece_to_input;
-	int i = 0;
-	while (str_stream)
-	{
-		str_stream >> piece_to_input;
-		white_player_[i++] = piece_to_input;
-	}
-	for (; i < 12; i++)
+	int k_white = 0, k_black = 0;
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+		{
+			in >> board_.checkers_map[i][j];
+
+			switch (board_.checkers_map[i][j])
+			{
+				case CheckersType::WHITE_KING:
+				{
+					if (k_white >= 12)
+					{
+						cout << "Limit exceeded\n";
+						break;
+					}
+					white_player_[k_white].not_beaten = true;
+					white_player_[k_white].setColor(CheckersPiece::WHITE);
+					white_player_[k_white].makeKing();
+					white_player_[k_white].setPosition(intoBoardCoordinates(i, j));
+					k_white++;
+					break;
+				}
+				case CheckersType::WHITE_PIECE:
+				{
+					if (k_white >= 12)
+					{
+						cout << "Limit exceeded\n";
+						break;
+					}
+					white_player_[k_white].not_beaten = true;
+					white_player_[k_white].setColor(CheckersPiece::WHITE);
+					white_player_[k_white].makePiece();
+					white_player_[k_white].setPosition(intoBoardCoordinates(i, j));
+					k_white++;
+					break;
+				}
+				case CheckersType::BLACK_KING:
+				{
+					if (k_black >= 12)
+					{
+						cout << "Limit exceeded\n";
+						break;
+					}
+					black_player_[k_black].not_beaten = true;
+					black_player_[k_black].setColor(CheckersPiece::BLACK);
+					black_player_[k_black].makeKing();
+					black_player_[k_black].setPosition(intoBoardCoordinates(i, j));
+					k_black++;
+					break;
+				}
+				case CheckersType::BLACK_PIECE:
+				{
+					if (k_black >= 12)
+					{
+						cout << "Limit exceeded\n";
+						break;
+					}
+					black_player_[k_black].not_beaten = true;
+					black_player_[k_black].setColor(CheckersPiece::BLACK);
+					black_player_[k_black].makePiece();
+					black_player_[k_black].setPosition(intoBoardCoordinates(i, j));
+					k_black++;
+					break;
+				}
+				default:
+					break;
+			}
+		}
+	for (int i = k_white; i < 12; i++)
 		white_player_[i].not_beaten = false;
-	str_stream.clear();
-	getline(in, str);
-	str_stream << str;
-	i = 0;
-	while (str_stream)
-	{
-		str_stream >> piece_to_input;
-		black_player_[i++]= piece_to_input;
-	}
-	for (; i < 12; i++)
-		white_player_[i].not_beaten = false;
-	in >> white_turn_;
+	for (int i = k_black; i < 12; i++)
+		black_player_[i].not_beaten = false;
 	if (white_turn_)
 		setWhiteTurn();
 	else
 		setBlackTurn();
+	if ((is_black_ai_ && !white_turn_) || (is_white_ai_ && white_turn_))
+		hightlighted_cells_.clear();
 	in.close();
 }
 void Game::saveToFile(std::string file_name)
 {
 	std::ofstream out(file_name);
-	for (auto x : white_player_)
-		out << x << ' ';
-	out << endl;
-	for (auto x : black_player_)
-		out << x << ' ';
-	out << endl;
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+			out << board_.checkers_map[i][j] << ' ';
+		out << endl;
+	}
 	out << white_turn_;
 	out.close();
 }
 
 
+int Game::isAiMove()
+{
+	if (!white_turn_ && is_black_ai_)
+		return -1;
+	else if (white_turn_ && is_white_ai_)
+		return 1;
+	else
+		return 0;
+}
+
+sf::Time Game::moveAi(list<move>& best_moves_for_ai)
+{
+	ai_.updatePositions(white_player_, black_player_, board_);
+	sf::Clock clock;
+	sf::Time timer = clock.getElapsedTime();
+	timer = clock.getElapsedTime() - timer;
+	if (!white_turn_ && is_black_ai_)
+		best_moves_for_ai = ai_.findBestMove(ai_depth_, moveWithPlayer::BLACK_PLAYER);
+	else
+		best_moves_for_ai = ai_.findBestMove(ai_depth_, moveWithPlayer::WHITE_PLAYER);
+	for (auto x : best_moves_for_ai)
+		cout << x.start_position << ' ' << x.end_position<<' ';
+	cout << endl;
+	return timer;
+}
+
+void Game::applyAndShowMoves(const list<move>& moves_to_apply, sf::Time already_elapsed_time, bool change_turn_after)
+{
+	sf::Time timer = already_elapsed_time;
+	sf::Clock clock;
+	last_moves_to_show_.clear();
+	int time_to_wait = 200;
+	if (timer.asMilliseconds() <= time_to_wait)
+	{
+		sf::Time wait_time = sf::milliseconds(time_to_wait) - timer;
+		timer = clock.getElapsedTime();
+		while (clock.getElapsedTime() - timer < wait_time);
+	}
+	for (auto cur_move = moves_to_apply.begin(); cur_move != moves_to_apply.end(); ++cur_move)
+	{
+		draw_app_.animate(cur_move->start_position, cur_move->end_position,
+			cur_player_[cur_move->iter_piece_to_move].getCheckersType());
+		last_moves_to_show_.push_back(cur_move->start_position);
+		makeMove(*cur_move);
+		redrawPosition();
+		clock.restart();
+		if (moves_to_apply.size() != 1)
+			while (clock.getElapsedTime() - timer < sf::milliseconds(time_to_wait));
+		if (std::next(cur_move, 1) == moves_to_apply.end())
+			last_moves_to_show_.push_back(cur_move->end_position);
+		int player = (white_turn_ ? moveWithPlayer::WHITE_PLAYER : moveWithPlayer::BLACK_PLAYER);
+		all_moves_.push_back(moveWithPlayer(player, *cur_move));
+	}
+	if (change_turn_after)
+	{
+		changeTurn();
+		checkForWin();
+	}
+}
+
 void Game::redrawPosition()
 {
 	window_.clear(sf::Color(255, 228, 170, 255));
 	int white_size = sizeOfPieces(white_player_), black_size = sizeOfPieces(black_player_);
-	draw_app_.drawStaticElements(white_turn_, hightlighted_cells_, last_moves_to_show_, white_size, black_size);
-	int cur_color = (white_turn_ ? CheckersPiece::WHITE : CheckersPiece::BLACK);
-	draw_app_.drawPieces(white_player_,black_player_,game_state_,cur_color);
-	draw_app_.drawWinState(game_state_);
-	if (game_state_ == static_cast<int>(GameState::NOT_RUNNING) ||
-		game_state_ == static_cast<int>(GameState::PAUSED))
+	draw_app_.drawStaticElements();
+	draw_app_.drawPieces();
+	draw_app_.drawWinState();
+	if (game_state_ == GameState::NOT_RUNNING ||
+		game_state_ == GameState::PAUSED)
 	{
 		sf::Texture trasparent_image;
 		trasparent_image.loadFromFile("transparent.png");
 		sf::Sprite spr(trasparent_image);
 		window_.draw(spr);
 	}
+	
 	window_for_widgets_.draw();
 	window_.display();
+}
+
+void Game::draw()
+{
+	draw_app_.drawStaticElements();
+	draw_app_.drawPieces();
+	draw_app_.drawWinState();
+	window_for_widgets_.draw();
+
 }
 
 bool Game::checkPlayerHasMove(const CheckersPieceWithState* player)
@@ -596,9 +503,11 @@ bool Game::checkPlayerHasMove(const CheckersPieceWithState* player)
 	do
 	{
 		cur_has_move = true;
-		if (player[i].possibleBeatMoves(cur_player_, another_player_, board_).empty())
-			if (player[i].possibleMoves(cur_player_, another_player_, board_).empty())
-				cur_has_move = false;
+		if (!player[i].not_beaten)
+			cur_has_move = false;
+		else if (player[i].possibleBeatMoves(cur_player_, another_player_, board_).empty() &&
+			player[i].possibleMoves(cur_player_, another_player_, board_).empty())
+			cur_has_move = false;
 		++i;
 	} while (i < 12 && !cur_has_move);
 	return cur_has_move;
@@ -610,7 +519,7 @@ void Game::clearAllStates()
 	std::fill(black_player_, black_player_ + 12, CheckersPieceWithState(CheckersPiece(), false));
 	is_piece_clicked_ = false;
 	setWhiteTurn();
-	game_state_ = static_cast<int>(GameState::RUNNING);
+	game_state_ = GameState::RUNNING;
 	piece_firstly_clicked_ = -1;
 	must_beat_ = false;
 	last_moves_to_show_.clear();
@@ -619,141 +528,86 @@ void Game::clearAllStates()
 	clearInfoForClickedPiece();
 }
 
-Game::Game(int game_mode, int ai_level) :
-	white_player_(),
-	black_player_(),
-	white_turn_(true),
-	hightlighted_cells_(),
-	possible_beat_moves_(),
-	possible_moves_(),
-	is_piece_clicked_(false),
-	piece_firstly_clicked_(),
-	cur_player_(white_player_),
-	another_player_(black_player_),
-	pieces_that_can_beat_(),
-	must_beat_(false),
-	game_state_(static_cast<int>(GameState::NOT_RUNNING)),
-	can_beat_many_times_(false),
-	ai_depth_(ai_level),
-	draw_app_(window_),
-	white_ai_(moveWithPlayer::WHITE_PLAYER),
-	black_ai_(moveWithPlayer::BLACK_PLAYER)
+Game::Game(): draw_app_(*this), widgets_app_(*this)
 {
 	draw_app_.setSizesAccordingToScreenResolution();
-	window_for_widgets_.setWindow(window_);
 	window_.setIcon(gimp_image.width, gimp_image.height, gimp_image.pixel_data);
-	widgetsInit();
-	gameChooseWidgetInit();
+	window_for_widgets_.setWindow(window_);
+	widgets_app_.initWidgets();
+	cur_player_ = white_player_;
+	another_player_ = black_player_;
 	is_black_ai_ = false;
 	is_white_ai_ = false;
-	animations_duration_ = sf::seconds(0.2);
-	if (game_mode == WHITE_AI || game_mode == TWO_AI)
-		is_white_ai_ = true;
-	if (game_mode == BLACK_AI || game_mode == TWO_AI)
-		is_black_ai_ = true;
 }
 
 void Game::Run()
 {
-	playersInit();
-	checkPiecesForBeating();
 	game_ended_ = false;
 	while (window_.isOpen())
 	{
-	
-		if (game_state_ == static_cast<int>(GameState::RUNNING) &&
-			!game_ended_ && ((!white_turn_ && is_black_ai_) || (white_turn_ && is_white_ai_)))
+
+		if (game_state_ == GameState::RUNNING && isAiMove())
 		{
-			if (!white_turn_ && is_black_ai_)
-				black_ai_.update(white_player_, black_player_, board_);
-			else
-				white_ai_.update(white_player_, black_player_, board_);
-			sf::Clock clock;
-			sf::Time timer = clock.getElapsedTime();
-			std::list<move> best_moves_for_ai;
-			timer = clock.getElapsedTime() - timer;
-			if (!white_turn_ && is_black_ai_)
-				best_moves_for_ai = black_ai_.findBestMove(ai_depth_);
-			else
-				best_moves_for_ai = white_ai_.findBestMove(ai_depth_);
-
-			last_moves_to_show_.clear();
-
-			if (timer.asMilliseconds() <= 500)
-			{
-				sf::Time wait_time = sf::milliseconds(500) - timer;
-				timer = clock.getElapsedTime();
-				while (clock.getElapsedTime() - timer < wait_time);
-			}
-			for (auto cur_best_move = best_moves_for_ai.begin(); cur_best_move != best_moves_for_ai.end(); ++cur_best_move)
-			{
-
-				last_moves_to_show_.push_back(cur_best_move->start_position);
-				makeMove(*cur_best_move);
-				redrawPosition();
-				clock.restart();
-				if (best_moves_for_ai.size() != 1)
-					while (clock.getElapsedTime() - timer < sf::milliseconds(500));
-				if (std::next(cur_best_move, 1) == best_moves_for_ai.end())
-					last_moves_to_show_.push_back(cur_best_move->end_position);
-				int player = (white_turn_ ? moveWithPlayer::WHITE_PLAYER : moveWithPlayer::BLACK_PLAYER);
-				all_moves_.push_back(moveWithPlayer(player, *cur_best_move));
-			}
-			checkForWin();
-			changeTurn();
+			list<move> best_moves_for_ai;
+			sf::Time time_lapsed_for_ai = moveAi(best_moves_for_ai);
+			applyAndShowMoves(best_moves_for_ai,time_lapsed_for_ai);
+			
 		}
 		sf::Event event;
 		while (window_.pollEvent(event))
 		{
 			window_for_widgets_.handleEvent(event);
-			if ((event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) ||
+			if ((event.type == sf::Event::KeyPressed && 
+				(event.key.code == sf::Keyboard::Escape || (event.key.control && event.key.code == sf::Keyboard::W))) ||
 				event.type == sf::Event::Closed)
 				window_.close();
+			if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Return &&
+				widgets_app_.getChooseWindow()->isVisible())
+				widgets_app_.okButtonClick();
 			if (event.type == sf::Event::Resized)
 			{
 				float aspect_ratio = draw_app_.getAspectRatio();
-				window_.setSize(sf::Vector2u(event.size.width, event.size.width / aspect_ratio));
-				//window_.setView(sf::View(sf::FloatRect(0,0,event.size.width,event.size.width)));
+				cout << event.size.width << " " << event.size.width / aspect_ratio << endl;
+				if (event.size.width / aspect_ratio < 0.85*draw_app_.getDisplayHeight())
+					window_.setSize(sf::Vector2u(event.size.width, event.size.width / aspect_ratio));
+				else
+					window_.setSize(sf::Vector2u(0.85*draw_app_.getDisplayHeight()*aspect_ratio, 0.85*draw_app_.getDisplayHeight()));
 			}
-			if (game_state_ != static_cast<int>(GameState::RUNNING))
+			if (game_state_ != GameState::RUNNING)
 				continue;
 			if (event.type == sf::Event::KeyReleased)
 			{
 				switch (event.key.code)
 				{
-				case sf::Keyboard::S:
-					saveToFile("position.check");
-					break;
-				case sf::Keyboard::R:
-					game_ended_ = false;
-					loadFromFile("position.check");
-					break;
-				case sf::Keyboard::F:
-					for (int i = 0; i < 8; i++)
-					{
-						for (int j = 0; j < 8; j++)
-							cout << board_.checkers_map[i][j] << ' ';
-						cout << endl;
-					}
-					break;
+					case sf::Keyboard::S:
+						saveToFile("position.check");
+						break;
+					case sf::Keyboard::R:
+						game_ended_ = false;
+						loadFromFile("position.check");
+						break;
+					case sf::Keyboard::F:
+						for (int i = 0; i < 8; i++)
+						{
+							for (int j = 0; j < 8; j++)
+								cout << board_.checkers_map[i][j] << ' ';
+							cout << endl;
+						}
+						break;
 				}
 
 			}
-			if (!game_ended_)
-			{
-				if (event.type == sf::Event::MouseButtonReleased)
-				{
-					BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
-					//std::cout << click_position << endl;
-					processMouseClick(click_position);
 
-				}
+			if (event.type == sf::Event::MouseButtonReleased)
+			{
+				BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
+				processMouseClick(click_position);
 			}
 		}
 
-		if (!game_ended_ && (game_state_ == static_cast<int>(GameState::BLACK_WINS) || game_state_ == static_cast<int>(GameState::WHITE_WINS)))
+		if (!game_ended_ && (game_state_ == GameState::BLACK_WINS || game_state_ == GameState::WHITE_WINS))
 		{
-			cout << (game_state_ == static_cast<int>(GameState::WHITE_WINS) ? "White wins!\n" : "Black wins\n") << endl;
+			cout << (game_state_ == GameState::WHITE_WINS ? "White wins!\n" : "Black wins\n") << endl;
 			game_ended_ = true;
 		}
 		redrawPosition();
