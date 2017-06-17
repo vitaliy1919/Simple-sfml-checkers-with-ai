@@ -39,6 +39,13 @@ void AppWidgets::cancelButtonClick()
 
 void AppWidgets::undoButtonCLick()
 {
+	if (checkers_game_->game_mode_ == checkers_game_->POSITION_EDITOR)
+	{
+		checkers_game_->ai_depth_ = 5;
+		checkers_game_->game_mode_ = checkers_game_->CHECKERS_GAME;
+		//choose_window_->showWithEffect(animation_type_, animations_duration_);
+		return;
+	}
 	if (!checkers_game_->all_moves_.empty())
 	{
 		auto iter = checkers_game_->all_moves_.rbegin();
@@ -145,7 +152,12 @@ void AppWidgets::menuClick(const vector<sf::String>& menu_items)
 	}
 	if (menu_items[i] == "Create position")
 	{
+		checkers_game_->clearAllStates();
+		checkers_game_->draw_app_.drawSelectCheckers();
 		checkers_game_->game_mode_ = checkers_game_->POSITION_EDITOR;
+		checkers_game_->checkers_type_in_editor_ = checkers_game_->draw_app_.getSelectCheckersPositions()[2].first;
+		checkers_game_->white_last_checker_ = checkers_game_->black_last_checker_ = 0;
+		checkers_game_->active_checker_in_editor_ = 2;
 	}
 }
 

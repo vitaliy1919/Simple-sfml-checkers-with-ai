@@ -67,6 +67,10 @@ private:
 
 	enum { CHECKERS_GAME, POSITION_EDITOR };
 	int game_mode_ = CHECKERS_GAME;
+	int active_checker_in_editor_ = -1;
+	int checkers_type_in_editor_ = -1;
+	int white_last_checker_ = 0;
+	int black_last_checker_ = 0;
 
 	// -1 - black ai, 0 - user move, 1 - mhite ai
 	int isAiMove();
@@ -98,6 +102,8 @@ private:
 	// process mouse click
 	void processMouseClick(const BoardIndex& click_position);
 
+
+	void clickInEditor(const sf::Event& click_event);
 	// build all possible position for given CheckersPiece
 	// if piece can beat, possible_moves_ will be empty
 	void buildPossibleMoves(int clicked_piece_iter);

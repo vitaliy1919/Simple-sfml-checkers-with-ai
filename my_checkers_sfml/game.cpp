@@ -150,6 +150,80 @@ void Game::processMouseClick(const BoardIndex& click_position)
 	}
 }
 
+void Game::clickInEditor(const sf::Event & click_event)
+{
+	int mouse_x = click_event.mouseButton.x, mouse_y = click_event.mouseButton.y;
+	sf::Vector2f mouse_real_coords = window_.mapPixelToCoords(sf::Vector2i(mouse_x, mouse_y));
+	BoardIndex click_position = draw_app_.clickPositionInBoard(mouse_x,	mouse_y);
+	if (click_event.mouseButton.button == sf::Mouse::Right)
+	{
+		if (click_position.isInBoard())
+		{
+			int white_position = click_position.checkForPieces(white_player_),
+				black_position = click_position.checkForPieces(black_player_);
+			board_.emptyCell(click_position);
+			if (white_position != -1)
+			{
+				white_player_[white_position].not_beaten = false;
+				white_last_checker_--;
+			}
+			else if (black_position != -1)
+			{
+				black_player_[black_position].not_beaten = false;
+				black_last_checker_--;
+			}
+		}
+	}
+	else if (click_event.mouseButton.button == sf::Mouse::Left)
+	{
+		if (click_position.isInBoard())
+		{
+			if (!click_position.checkForPiecesBool(board_) && ((click_position.column - 'a' + click_position.row) % 2 != 0))
+			{
+				if (checkers_type_in_editor_ == CheckersType::WHITE_PIECE ||
+					checkers_type_in_editor_ == CheckersType::WHITE_KING)
+				{
+					if (white_last_checker_ < 12)
+					{
+						board_.getPiece(click_position) = checkers_type_in_editor_;
+						white_player_[white_last_checker_].setPosition(click_position);
+						white_player_[white_last_checker_].fillInfoByType(checkers_type_in_editor_);
+						white_player_[white_last_checker_].not_beaten = true;
+						white_last_checker_++;
+					}
+					else
+						cout << "Limit reached!\n";
+				}
+				else
+				{
+					if (black_last_checker_ < 12)
+					{
+						board_.getPiece(click_position) = checkers_type_in_editor_;
+						black_player_[black_last_checker_].setPosition(click_position);
+						black_player_[black_last_checker_].fillInfoByType(checkers_type_in_editor_);
+						black_player_[black_last_checker_].not_beaten = true;
+						black_last_checker_++;
+					}
+					else
+						cout << "Limit reached!\n";
+				}
+			}
+		}
+		else
+		{
+			const pair<int,sf::FloatRect>* checkers_select_positions = draw_app_.getSelectCheckersPositions();
+			int i = 0;
+			while (i < 4 && !checkers_select_positions[i].second.contains(mouse_real_coords))
+				i++;
+			if (i < 4)
+			{
+				active_checker_in_editor_ = i;
+				checkers_type_in_editor_ = checkers_select_positions[i].first;
+			}
+		}
+	}
+}
+
 
 void Game::moveClickedPiece(const BoardIndex & click_position)
 {
@@ -478,7 +552,7 @@ void Game::redrawPosition()
 		game_state_ == GameState::PAUSED)
 	{
 		sf::Texture trasparent_image;
-		trasparent_image.loadFromFile("transparent.png");
+		trasparent_image.loadFromFile("resources/images/transparent.png");
 		sf::Sprite spr(trasparent_image);
 		window_.draw(spr);
 	}
@@ -600,8 +674,13 @@ void Game::Run()
 
 			if (event.type == sf::Event::MouseButtonReleased)
 			{
-				BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
-				processMouseClick(click_position);
+				if (game_mode_ == CHECKERS_GAME)
+				{
+					BoardIndex click_position = draw_app_.clickPositionInBoard(event.mouseButton.x, event.mouseButton.y);
+					processMouseClick(click_position);
+				}
+				else
+					clickInEditor(event);
 			}
 		}
 

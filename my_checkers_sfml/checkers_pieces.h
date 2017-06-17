@@ -144,6 +144,7 @@ public:
 
 	//setters and getters
 	BoardIndex getPosition() const { return position_; }
+	void fillInfoByType(int type);
 	void setPosition(const BoardIndex& board_index) { position_ = board_index;}
 	void setColor(int color) { color_ = color; }
 	int getColor() const { return color_; }

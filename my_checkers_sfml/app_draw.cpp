@@ -135,13 +135,13 @@ DrawAppInstance::DrawAppInstance(Game &game)
 {
 	checkers_game_ = &game;
 	window_ = &game.window_;
-	text_font_.loadFromFile("PT_Serif-Web-Regular.ttf");
+	text_font_.loadFromFile("resources/fonts/PT_Serif-Web-Regular.ttf");
 
-	white_piece_texture_.loadFromFile("white_man.png");
-	white_king_texture_.loadFromFile("white_queen.png");
+	white_piece_texture_.loadFromFile("resources/images/white_man.png");
+	white_king_texture_.loadFromFile("resources/images/white_queen.png");
 
-	black_piece_texture_.loadFromFile("black_man.png");
-	black_king_texture_.loadFromFile("black_queen.png");
+	black_piece_texture_.loadFromFile("resources/images/black_man.png");
+	black_king_texture_.loadFromFile("resources/images/black_queen.png");
 
 	white_piece_texture_.setSmooth(true);
 	white_king_texture_.setSmooth(true);
@@ -163,6 +163,8 @@ sf::Vector2f DrawAppInstance::getRealPosition(const BoardIndex & position) const
 BoardIndex DrawAppInstance::clickPositionInBoard(int x, int y)
 {
 	sf::Vector2f real_coordinates = window_->mapPixelToCoords(sf::Vector2i(x, y));
+	if (real_coordinates.y - kTopMargin < 0 || real_coordinates.x - kLeftMargin < 0)
+		return BoardIndex('a' - 1, -1);
 	float row = (real_coordinates.y - kTopMargin) / cell_size_, column = (real_coordinates.x - kLeftMargin) / cell_size_;
 	return BoardIndex(int(column) + 'a', 8 - int(row));
 }
@@ -309,21 +311,70 @@ void DrawAppInstance::highlightCells(const vector<BoardIndex>& cells_to_highligh
 	}
 }
 
+void DrawAppInstance::drawSelectCheckers()
+{
+	float select_checkers_size = (board_size_ / 2 - 2 * kObjectMargin) / 2;
+	sf::Sprite checker(white_piece_texture_);
+	for (int i = 0; i < 4; i++)
+	{
+		sf::Texture checker_texture;
+		switch (i)
+		{
+		case 0:
+			checker_texture = black_piece_texture_;
+			select_checkers_positions[i].first = CheckersType::BLACK_PIECE;
+			break;
+		case 1:
+			checker_texture = black_king_texture_;
+			select_checkers_positions[i].first = CheckersType::BLACK_KING;
+			break;
+		case 2:
+			checker_texture = white_piece_texture_;
+			select_checkers_positions[i].first = CheckersType::WHITE_PIECE;
+			break;
+		case 3:
+			checker_texture = white_king_texture_;
+			select_checkers_positions[i].first = CheckersType::WHITE_KING;
+			break;
+		default:
+			break;
+		}
+		select_checkers_positions[i].second = sf::FloatRect(
+			kLeftMargin + board_size_ + kObjectMargin,
+			kTopMargin + i*(select_checkers_size + kObjectMargin),
+			select_checkers_size,
+			select_checkers_size);
+		checker.setTexture(checker_texture, true);
+		sf::Color new_color = checker.getColor();
+		if (i == checkers_game_->active_checker_in_editor_)
+			checker.setColor(sf::Color(255, 255, 255, 255));
+		else
+			checker.setColor(sf::Color(255, 255, 255, 80));
+		checker.setScale(select_checkers_size / checker_texture.getSize().x, select_checkers_size / checker_texture.getSize().y);
+		checker.setPosition(kLeftMargin + board_size_ + kObjectMargin, kTopMargin + i*(select_checkers_size + kObjectMargin));
+		window_->draw(checker);
+	}
+}
+
 void DrawAppInstance::drawStaticElements()
 {
 	drawBoard();
 	float kThickness = 0.08*cell_size_;
 	highlightCells(checkers_game_->last_moves_to_show_, sf::Color(118, 255, 3, 255),kThickness/1.5);
 	highlightCells(checkers_game_->hightlighted_cells_, sf::Color(255, 193, 7, 255),kThickness);
-	drawTurn(checkers_game_->white_turn_);
-	int white_size = sizeOfPieces(checkers_game_->white_player_),
-		black_size = sizeOfPieces(checkers_game_->black_player_);
-	drawBeatenPieces(white_size,black_size);
+	if (checkers_game_->game_mode_ == checkers_game_->CHECKERS_GAME)
+	{
+		drawTurn(checkers_game_->white_turn_);
+		int white_size = sizeOfPieces(checkers_game_->white_player_),
+			black_size = sizeOfPieces(checkers_game_->black_player_);
+		drawBeatenPieces(white_size, black_size);
+	}
+	else
+		drawSelectCheckers();
 }
 
 void DrawAppInstance::setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button)
 {
-	
 
 }
 

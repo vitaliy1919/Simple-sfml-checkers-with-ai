@@ -116,6 +116,18 @@ bool CheckersPiece::transformIntoKingIfPossible()
 	return false;
 }
 
+void CheckersPiece::fillInfoByType(int type)
+{
+	if (type == CheckersType::WHITE_KING || type == CheckersType::WHITE_PIECE)
+		color_ = WHITE;
+	else
+		color_ = BLACK;
+	if (type == CheckersType::WHITE_PIECE || type == CheckersType::BLACK_PIECE)
+		is_king_ = false;
+	else
+		is_king_ = true;
+}
+
 int CheckersPiece::getCheckersType() const
 {
 	if (color_ == WHITE)

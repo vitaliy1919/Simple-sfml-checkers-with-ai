@@ -31,7 +31,7 @@ class DrawAppInstance
 	float aspect_ratio_;
 
 	
-
+	pair<int,sf::FloatRect> select_checkers_positions[4];
 	//tgui::Gui *window_for_widgets_;
 	sf::Texture white_piece_texture_;
 	sf::Texture black_piece_texture_;
@@ -59,6 +59,7 @@ public:
 	float getBoardSize() const { return board_size_; }
 	float getCellSize() const { return cell_size_; }
 	float getAspectRatio() const { return aspect_ratio_; }
+	const pair<int, sf::FloatRect>* getSelectCheckersPositions() const { return select_checkers_positions; };
 	void drawBoard(); 
 	void drawTurn(bool white_turn);
 	void drawBeatenPieces(int white_player_size, int black_player_size);
@@ -66,6 +67,7 @@ public:
 	void animate(const BoardIndex& start, const BoardIndex& end, int checkers_type);
 
 	void highlightCells(const vector<BoardIndex>& cells_to_highlight, sf::Color color, float thickness);
+	void drawSelectCheckers();
 	void drawStaticElements();
 	void setWidgetsPosition(tgui::MenuBar::Ptr main_menu, tgui::Button::Ptr unmove_button, tgui::Button::Ptr move_button);
 	void drawPieces();
