@@ -182,6 +182,17 @@ istream & operator >> (istream & is, CheckersPiece & piece_to_input)
 	return is;
 }
 
+ostream & operator<<(ostream & os, const move & move_to_show)
+{
+	os << move_to_show.start_position;
+	if (move_to_show.iter_piece_to_beat != -1)
+		os << ":";
+	else
+		os << "-";
+	os << move_to_show.end_position;
+	return os;
+}
+
 void unmakeMove(moveWithPlayer & move_to_unmake, CheckersPieceWithState * white_player, CheckersPieceWithState * black_player, Board & board)
 {
 	CheckersPieceWithState
@@ -267,4 +278,9 @@ void Board::clear()
 	for (int i = 0; i < 8; i++)
 		for (int j = 0; j < 8; j++)
 			checkers_map[i][j] = CheckersType::EMPTY;
+}
+
+void move::showBeatPartOfMove() const
+{
+	cout << ":" << end_position;
 }

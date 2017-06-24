@@ -23,8 +23,18 @@ void AppWidgets::okButtonClick()
 		choose_window_->hide();
 	else
 		choose_window_->hideWithEffect(animation_type_, animations_duration_);
-	checkers_game_->clearAllStates();
-	checkers_game_->playersInit();
+	if (checkers_game_->game_mode_ == checkers_game_->CHECKERS_GAME)
+	{
+		checkers_game_->clearAllStates();
+		checkers_game_->playersInit();
+	}
+	else
+	{
+		checkers_game_->checkForWin();
+		checkers_game_->checkPiecesForBeating();
+		checkers_game_->game_mode_ = checkers_game_->CHECKERS_GAME;
+		unmove_button_->setText("Undo move");
+	}
 }
 
 void AppWidgets::cancelButtonClick()
@@ -41,9 +51,9 @@ void AppWidgets::undoButtonCLick()
 {
 	if (checkers_game_->game_mode_ == checkers_game_->POSITION_EDITOR)
 	{
-		checkers_game_->ai_depth_ = 5;
-		checkers_game_->game_mode_ = checkers_game_->CHECKERS_GAME;
-		//choose_window_->showWithEffect(animation_type_, animations_duration_);
+		/*checkers_game_->ai_depth_ = 5;
+		checkers_game_->game_mode_ = checkers_game_->CHECKERS_GAME;*/
+		choose_window_->showWithEffect(animation_type_, animations_duration_);
 		return;
 	}
 	if (!checkers_game_->all_moves_.empty())
@@ -87,6 +97,7 @@ void AppWidgets::undoButtonCLick()
 			checkers_game_->all_moves_.erase(iter.base(), checkers_game_->all_moves_.end());
 
 		}
+		checkers_game_->showMoves();
 		/*all_moves_.erase(iter.base(), all_moves_.end());
 		if (iter!=all_moves_.rend() &&
 		(is_white_ai_ && iter->player == moveWithPlayer::WHITE_PLAYER) ||
@@ -132,6 +143,7 @@ void AppWidgets::menuClick(const vector<sf::String>& menu_items)
 		i++;
 		if (menu_items[i] == "New game with ai")
 		{
+			unmove_button_->setText("Undo move");
 			window_for_widgets_->removeAllWidgets();
 			initWidgets();
 			choose_window_->showWithEffect(animation_type_, animations_duration_);
@@ -142,6 +154,7 @@ void AppWidgets::menuClick(const vector<sf::String>& menu_items)
 		}
 		if (menu_items[i] == "New game for two players")
 		{
+			unmove_button_->setText("Undo move");
 			choose_window_->hideWithEffect(animation_type_, animations_duration_);
 			checkers_game_->is_white_ai_ = checkers_game_->is_black_ai_ = false;
 			checkers_game_->clearAllStates();
@@ -152,12 +165,17 @@ void AppWidgets::menuClick(const vector<sf::String>& menu_items)
 	}
 	if (menu_items[i] == "Create position")
 	{
-		checkers_game_->clearAllStates();
-		checkers_game_->draw_app_.drawSelectCheckers();
-		checkers_game_->game_mode_ = checkers_game_->POSITION_EDITOR;
-		checkers_game_->checkers_type_in_editor_ = checkers_game_->draw_app_.getSelectCheckersPositions()[2].first;
-		checkers_game_->white_last_checker_ = checkers_game_->black_last_checker_ = 0;
-		checkers_game_->active_checker_in_editor_ = 2;
+		i++;
+		if (menu_items[i] == "New position")
+		{
+			checkers_game_->clearAllStates();
+			unmove_button_->setText("Start game!");
+			checkers_game_->draw_app_.drawSelectCheckers();
+			checkers_game_->game_mode_ = checkers_game_->POSITION_EDITOR;
+			checkers_game_->checkers_type_in_editor_ = checkers_game_->draw_app_.getSelectCheckersPositions()[2].first;
+			checkers_game_->white_last_checker_ = checkers_game_->black_last_checker_ = 0;
+			checkers_game_->active_checker_in_editor_ = 2;
+		}
 	}
 }
 
@@ -238,7 +256,7 @@ void AppWidgets::gameChooseWidgetInit()
 		text_label_for_level_->getPosition().x + text_label_for_level_->getSize().x + object_margin,
 		player_or_ai_choose_[0]->getPosition().y + player_or_ai_choose_[0]->getSize().y + 2 * object_margin);
 	level_slider_->setMinimum(1);
-	level_slider_->setMaximum(9);
+	level_slider_->setMaximum(10);
 	level_slider_->setValue(1);
 	choose_window_->add(level_slider_);
 	comboBoxConnectWithSlider();

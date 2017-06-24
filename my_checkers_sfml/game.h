@@ -3,6 +3,7 @@
 #include "gui.h"
 #include "ai.h"
 #include "icon.h"
+#include <thread>
 #include <fstream>
 #include <algorithm>
 #include <sstream>
@@ -64,6 +65,7 @@ private:
 	int game_state_;
 	bool game_ended_;
 	int ai_depth_;
+	bool ai_done_;
 
 	enum { CHECKERS_GAME, POSITION_EDITOR };
 	int game_mode_ = CHECKERS_GAME;
@@ -118,7 +120,7 @@ private:
 	// checks wthether given player has at least on move
 	// used in checkForWin
 	bool checkPlayerHasMove(const CheckersPieceWithState* player);
-
+	void showMoves();
 	// clears board_ state, doesn't work properly now
 	// used for save and load game positions
 	void clearAllStates();

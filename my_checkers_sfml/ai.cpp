@@ -297,6 +297,7 @@ list<move> Ai::findBestMove(int depth, int color)
 	iter_piece_beat_multiple_ = -1;
 	list<move> result_moves;
 	CheckersPieceWithState *cur_player = getCurrentPlayer(ai_player_);
+	cout << (color == moveWithPlayer::BLACK_PLAYER ? "Black" : "White") << " Ai thinking...\n********************************\n";
 	bool can_beat_multiple = false;
 	do
 	{
@@ -322,5 +323,6 @@ list<move> Ai::findBestMove(int depth, int color)
 	float time_lapsed = (end_time - start_time) / ((float)CLOCKS_PER_SEC);
 	cout << "Time lapsed " <<"(depth = "<<depth<<"): "<< time_lapsed << endl;
 	cout << "Nodes created: " << number_nodes_ << endl;
+	cout << "********************************\n";
 	return result_moves;
 }

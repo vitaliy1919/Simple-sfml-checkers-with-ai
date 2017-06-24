@@ -114,7 +114,9 @@ void DrawAppInstance::drawPlayersPieces(const CheckersPieceWithState * player, i
 					cell_size_ / (1.2*piece_texture->getSize().x),
 					cell_size_ / (1.2* piece_texture->getSize().y)));
 			}
-			if (game_state == GameState::NOT_RUNNING)
+			if (checkers_game_->game_mode_ == checkers_game_->POSITION_EDITOR)
+				piece.setColor(sf::Color(255, 255, 255, 255));
+			else if (game_state == GameState::NOT_RUNNING)
 				piece.setColor(sf::Color(255, 255, 255, 64));
 			else if (game_state == GameState::RUNNING && color != turn)
 				piece.setColor(sf::Color(255, 255, 255, 150));

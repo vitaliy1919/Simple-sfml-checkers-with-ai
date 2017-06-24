@@ -175,12 +175,12 @@ public:
 
 struct move
 {
-	
 	BoardIndex start_position;
 	BoardIndex end_position;
 	//static const int NOT_BEAT_MOVE = -1;
 	int iter_piece_to_move, iter_piece_to_beat;
 	bool became_king;
+	void showBeatPartOfMove() const;
 	move(const BoardIndex& st_pos = BoardIndex(),
 		const BoardIndex& end_pos = BoardIndex(),
 		int iter_move_piece = -1,
@@ -192,6 +192,7 @@ struct move
 		became_king(king)
 	{}
 };
+ostream& operator<<(ostream& os, const move& move_to_show);
 
 struct moveWithPlayer :public move
 {

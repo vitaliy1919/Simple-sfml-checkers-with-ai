@@ -49,6 +49,14 @@ inline typename vector<move_with_piece>::iterator findInVector(vector<move_with_
 		++iter;
 	return iter;
 }
+
+template <typename T>
+int shiftToRight(T* arr, int arr_size, int position, int shift_size = 1)
+{
+	for (int i = position + shift_size; i < arr_size; i++)
+		arr[i - shift_size] = arr[i];
+	return arr_size - shift_size;
+}
 void Game::playersInit()
 {
 	int iter = 0;
@@ -164,13 +172,17 @@ void Game::clickInEditor(const sf::Event & click_event)
 			board_.emptyCell(click_position);
 			if (white_position != -1)
 			{
-				white_player_[white_position].not_beaten = false;
+				//white_player_[white_position].not_beaten = false;
+				shiftToRight(white_player_, white_last_checker_, white_position);
 				white_last_checker_--;
+				white_player_[white_last_checker_].not_beaten = false;
 			}
 			else if (black_position != -1)
 			{
-				black_player_[black_position].not_beaten = false;
+				//black_player_[black_position].not_beaten = false;
+				shiftToRight(black_player_, black_last_checker_,black_position);
 				black_last_checker_--;
+				black_player_[black_last_checker_].not_beaten = false;
 			}
 		}
 	}
@@ -310,6 +322,7 @@ void Game::moveClickedPiece(const BoardIndex & click_position)
 	}
 	if (move_done_)
 	{
+		showMoves();
 		last_moves_to_show_.clear();
 		appendVector(last_moves_to_show_, last_moves_of_cur_player_);
 		clearInfoForClickedPiece();
@@ -504,6 +517,7 @@ sf::Time Game::moveAi(list<move>& best_moves_for_ai)
 	for (auto x : best_moves_for_ai)
 		cout << x.start_position << ' ' << x.end_position<<' ';
 	cout << endl;
+	ai_done_ = true;
 	return timer;
 }
 
@@ -534,6 +548,7 @@ void Game::applyAndShowMoves(const list<move>& moves_to_apply, sf::Time already_
 		int player = (white_turn_ ? moveWithPlayer::WHITE_PLAYER : moveWithPlayer::BLACK_PLAYER);
 		all_moves_.push_back(moveWithPlayer(player, *cur_move));
 	}
+	showMoves();
 	if (change_turn_after)
 	{
 		changeTurn();
@@ -587,10 +602,42 @@ bool Game::checkPlayerHasMove(const CheckersPieceWithState* player)
 	return cur_has_move;
 }
 
+void Game::showMoves()
+{
+	int i = 0;
+	cout << "--------------------------------------------\nMoves:\n";
+	if (all_moves_.size() == 1)
+	{
+		cout << i + 1 << ". "<<all_moves_.front()<<endl;
+		cout << "---------------------------------------\n";
+		return;
+	}
+	for (auto iter = all_moves_.begin(); iter != all_moves_.end(); ++iter)
+	{
+		if (iter->player == moveWithPlayer::BLACK_PLAYER)
+			i++;
+		else
+			cout << i + 1 << ". ";
+		auto start_iter = iter;
+		cout << *iter;
+		while (std::next(iter) != all_moves_.end() && iter->player == std::next(iter)->player)
+		{
+			++iter;
+			iter->showBeatPartOfMove();
+		}
+		if (iter->player == moveWithPlayer::BLACK_PLAYER || std::next(iter) == all_moves_.end())
+			cout << endl;
+		else
+			cout << ' ';
+	}
+	cout << "---------------------------------------\n";
+}
+
 void Game::clearAllStates()
 {
 	std::fill(white_player_, white_player_ + 12, CheckersPieceWithState(CheckersPiece(), false));
 	std::fill(black_player_, black_player_ + 12, CheckersPieceWithState(CheckersPiece(), false));
+	all_moves_.clear();
 	is_piece_clicked_ = false;
 	setWhiteTurn();
 	game_state_ = GameState::RUNNING;
@@ -616,15 +663,29 @@ Game::Game(): draw_app_(*this), widgets_app_(*this)
 
 void Game::Run()
 {
+	using std::thread;
+	thread ai_thread;
 	game_ended_ = false;
+	bool ai_start_thinking = false;
+	list<move> best_moves_for_ai;
+	sf::Time time_lapsed_for_ai;
 	while (window_.isOpen())
 	{
 
-		if (game_state_ == GameState::RUNNING && isAiMove())
+		if (game_mode_ == CHECKERS_GAME && game_state_ == GameState::RUNNING && isAiMove())
 		{
-			list<move> best_moves_for_ai;
-			sf::Time time_lapsed_for_ai = moveAi(best_moves_for_ai);
-			applyAndShowMoves(best_moves_for_ai,time_lapsed_for_ai);
+			if (!ai_start_thinking)
+			{
+				ai_start_thinking = true;
+				ai_done_ = false;
+				ai_thread = thread(&Game::moveAi,this,std::ref(best_moves_for_ai));
+				ai_thread.detach();
+			}
+			if (ai_done_)
+			{
+				ai_start_thinking = false;
+				applyAndShowMoves(best_moves_for_ai, time_lapsed_for_ai);
+			}
 			
 		}
 		sf::Event event;
@@ -647,7 +708,7 @@ void Game::Run()
 				else
 					window_.setSize(sf::Vector2u(0.85*draw_app_.getDisplayHeight()*aspect_ratio, 0.85*draw_app_.getDisplayHeight()));
 			}
-			if (game_state_ != GameState::RUNNING)
+			if (game_state_ != GameState::RUNNING || ai_start_thinking)
 				continue;
 			if (event.type == sf::Event::KeyReleased)
 			{
