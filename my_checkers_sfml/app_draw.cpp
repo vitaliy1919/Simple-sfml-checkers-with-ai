@@ -245,6 +245,64 @@ void DrawAppInstance::drawBeatenPieces(int white_player_size, int black_player_s
 	}
 }
 
+void DrawAppInstance::AiThinkingAnimation()
+{
+	
+	
+	if (checkers_game_->ai_start_thinking_ && !checkers_game_->ai_done_)
+	{/*
+		sf::View new_view = window_->getView();
+		new_view.rotate(0.01);
+		window_->setView(new_view);*/
+		sf::CircleShape animation(50);
+		sf::Vector2f center_position = sf::Vector2f(kLeftMargin + board_size_ / 2, kTopMargin + board_size_ / 2);
+		animation.setPosition(sf::Vector2f(center_position.x - 50,center_position.y - 50));
+		for (int i = 50; i > 5; i--)
+		{
+			animation.setRadius(i);
+			animation.setPosition(sf::Vector2f(center_position.x - i, center_position.y - i));
+			//if (i > 25)
+				animation.setFillColor(sf::Color(255 + 1*(i-50), 67, 54));
+				//animation.setFillColor(sf::Color(255+i-50, 214, 0));
+				//animation.setFillColor(sf::Color(255, 67, 54));
+			/*else
+				animation.setFillColor(sf::Color(200 + i-25, 28, 28));*/
+			window_->draw(animation);
+		}
+		double linie_width = 3.0, thick_linie_width = 5.0;
+		sf::RectangleShape linie(sf::Vector2f(linie_width, 50.0)), thick_linie(sf::Vector2f(thick_linie_width,25));
+		linie.setPosition(sf::Vector2f(center_position.x, center_position.y));
+		linie.setOrigin(sf::Vector2f(linie_width / 2, 0));
+		thick_linie.setOrigin(sf::Vector2f(thick_linie_width / 2, 0));
+		thick_linie.setPosition(sf::Vector2f(center_position.x, center_position.y));
+		thick_linie.setFillColor(sf::Color::Black);
+		linie.setFillColor(sf::Color::Black);
+		animation_angle_+=1;
+		/*while (animation_angle_ > 360)
+		{
+			animation_thick_angle_+=5;
+			animation_angle_ -= 360;
+		}*/
+		animation_thick_angle_ = animation_angle_ / 360.0 * 15 + 180;
+		linie.setRotation(animation_angle_);
+		thick_linie.setRotation(animation_thick_angle_);
+		double small_circle_radius = 5;
+		animation.setRadius(small_circle_radius);
+		animation.setFillColor(sf::Color(33, 33, 33));
+		animation.setPosition(sf::Vector2f(center_position.x - small_circle_radius, center_position.y - small_circle_radius));
+		window_->draw(linie);
+		window_->draw(thick_linie);
+		window_->draw(animation);
+	}
+	else
+	{
+		sf::View new_view = window_->getView();
+		//new_view.setSize(display_width_, display_height_);
+		new_view.setRotation(0);
+		window_->setView(new_view);
+	}
+}
+
 void DrawAppInstance::animate(const BoardIndex & start, const BoardIndex & end, int checkers_type)
 {
 	auto real_start = getRealPosition(start), real_end = getRealPosition(end);
@@ -450,8 +508,9 @@ void DrawAppInstance::setSizesAccordingToScreenResolution()
 	kUnmoveButtonSize = 0.05*board_size_;
 	kBottomMargin = 2 * kObjectMargin + kUnmoveButtonSize;
 
-
-	window_->create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers");
+	sf::ContextSettings settings;
+	settings.antialiasingLevel = 8;
+	window_->create(sf::VideoMode(window_size + kLeftMargin + kRightMargin, window_size + kTopMargin + kBottomMargin), "Checkers", sf::Style::Default, settings);
 
 
 	aspect_ratio_ = float(window_->getSize().x) / window_->getSize().y;

@@ -66,6 +66,7 @@ private:
 	bool game_ended_;
 	int ai_depth_;
 	bool ai_done_;
+	bool ai_start_thinking_ = false;
 
 	enum { CHECKERS_GAME, POSITION_EDITOR };
 	int game_mode_ = CHECKERS_GAME;

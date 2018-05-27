@@ -563,6 +563,7 @@ void Game::redrawPosition()
 	draw_app_.drawStaticElements();
 	draw_app_.drawPieces();
 	draw_app_.drawWinState();
+	draw_app_.AiThinkingAnimation();
 	if (game_state_ == GameState::NOT_RUNNING ||
 		game_state_ == GameState::PAUSED)
 	{
@@ -666,7 +667,7 @@ void Game::Run()
 	using std::thread;
 	thread ai_thread;
 	game_ended_ = false;
-	bool ai_start_thinking = false;
+	
 	list<move> best_moves_for_ai;
 	sf::Time time_lapsed_for_ai;
 	while (window_.isOpen())
@@ -674,16 +675,16 @@ void Game::Run()
 
 		if (game_mode_ == CHECKERS_GAME && game_state_ == GameState::RUNNING && isAiMove())
 		{
-			if (!ai_start_thinking)
+			if (!ai_start_thinking_)
 			{
-				ai_start_thinking = true;
+				ai_start_thinking_ = true;
 				ai_done_ = false;
 				ai_thread = thread(&Game::moveAi,this,std::ref(best_moves_for_ai));
 				ai_thread.detach();
 			}
 			if (ai_done_)
 			{
-				ai_start_thinking = false;
+				ai_start_thinking_ = false;
 				applyAndShowMoves(best_moves_for_ai, time_lapsed_for_ai);
 			}
 			
@@ -692,13 +693,16 @@ void Game::Run()
 		while (window_.pollEvent(event))
 		{
 			window_for_widgets_.handleEvent(event);
+
 			if ((event.type == sf::Event::KeyPressed && 
 				(event.key.code == sf::Keyboard::Escape || (event.key.control && event.key.code == sf::Keyboard::W))) ||
 				event.type == sf::Event::Closed)
 				window_.close();
+
 			if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Return &&
 				widgets_app_.getChooseWindow()->isVisible())
 				widgets_app_.okButtonClick();
+
 			if (event.type == sf::Event::Resized)
 			{
 				float aspect_ratio = draw_app_.getAspectRatio();
@@ -708,8 +712,10 @@ void Game::Run()
 				else
 					window_.setSize(sf::Vector2u(0.85*draw_app_.getDisplayHeight()*aspect_ratio, 0.85*draw_app_.getDisplayHeight()));
 			}
-			if (game_state_ != GameState::RUNNING || ai_start_thinking)
+			
+			if (game_state_ != GameState::RUNNING || ai_start_thinking_)
 				continue;
+
 			if (event.type == sf::Event::KeyReleased)
 			{
 				switch (event.key.code)
